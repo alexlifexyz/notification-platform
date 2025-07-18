@@ -1,0 +1,230 @@
+# 通知平台客户端配置示例
+# 适用于各种业务服务集成通知平台
+
+spring:
+  application:
+    name: business-service-example
+  
+  # 数据库配置（业务服务自己的数据库）
+  datasource:
+    url: jdbc:mysql://localhost:3306/business_service?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# 服务器配置
+server:
+  port: 8082
+
+# 通知客户端配置
+notification:
+  client:
+    # 是否启用通知客户端
+    enabled: true
+    
+    # 通知服务基础URL
+    base-url: http://localhost:8080/notification-service
+    
+    # 连接超时时间（毫秒）
+    connect-timeout: 5000
+    
+    # 读取超时时间（毫秒）
+    read-timeout: 30000
+    
+    # 最大重试次数
+    max-retries: 3
+    
+    # 重试间隔（毫秒）
+    retry-interval: 1000
+
+# 日志配置
+logging:
+  level:
+    # 业务服务日志级别
+    com.enterprise.user: INFO
+    com.enterprise.ecommerce: INFO
+    
+    # 通知客户端日志级别（调试时可设为DEBUG）
+    com.enterprise.notification.client: INFO
+    
+    # 根日志级别
+    root: INFO
+  
+  # 日志格式
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+  
+  # 日志文件配置
+  file:
+    name: logs/business-service.log
+    max-size: 100MB
+    max-history: 30
+
+# 业务配置示例
+business:
+  # 用户管理配置
+  user:
+    # 密码重置链接有效期（分钟）
+    password-reset-expire-minutes: 30
+    
+    # 邮箱确认链接有效期（小时）
+    email-confirm-expire-hours: 24
+    
+    # 是否启用生日祝福
+    birthday-wishes-enabled: true
+    
+    # 生日祝福发送时间
+    birthday-wishes-time: "09:00"
+
+  # 电商配置
+  ecommerce:
+    # 订单配置
+    order:
+      # 未付款订单过期时间（小时）
+      pending-payment-expire-hours: 24
+      
+      # 订单提醒发送时间（过期前几小时）
+      reminder-hours-before-expire: 2
+    
+    # 库存配置
+    inventory:
+      # 库存不足阈值
+      low-stock-threshold: 10
+      
+      # 是否启用库存警告
+      low-stock-alert-enabled: true
+    
+    # 促销配置
+    promotion:
+      # 批量发送时的并发数
+      batch-send-concurrency: 10
+      
+      # 发送间隔（毫秒）
+      send-interval-ms: 100
+
+# 定时任务配置
+scheduling:
+  # 是否启用定时任务
+  enabled: true
+  
+  # 线程池大小
+  pool-size: 5
+  
+  # 任务配置
+  tasks:
+    # 生日祝福任务
+    birthday-wishes:
+      cron: "0 0 9 * * ?" # 每天9点执行
+      enabled: true
+    
+    # 订单提醒任务
+    order-reminder:
+      cron: "0 0 */2 * * ?" # 每2小时执行一次
+      enabled: true
+    
+    # 库存检查任务
+    inventory-check:
+      cron: "0 0 8,14,20 * * ?" # 每天8点、14点、20点执行
+      enabled: true
+    
+    # 健康检查任务
+    health-check:
+      cron: "0 */5 * * * ?" # 每5分钟执行一次
+      enabled: true
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  
+  endpoint:
+    health:
+      show-details: always
+  
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 异步配置
+async:
+  # 核心线程数
+  core-pool-size: 5
+  
+  # 最大线程数
+  max-pool-size: 20
+  
+  # 队列容量
+  queue-capacity: 100
+  
+  # 线程名前缀
+  thread-name-prefix: "NotificationAsync-"
+
+---
+# 开发环境配置
+spring:
+  profiles: dev
+
+notification:
+  client:
+    base-url: http://localhost:8080/notification-service
+    connect-timeout: 10000
+    read-timeout: 60000
+
+logging:
+  level:
+    com.enterprise.notification.client: DEBUG
+    com.enterprise.user: DEBUG
+    com.enterprise.ecommerce: DEBUG
+
+---
+# 测试环境配置
+spring:
+  profiles: test
+
+notification:
+  client:
+    base-url: http://test-notification-service:8080/notification-service
+    max-retries: 1
+    retry-interval: 500
+
+business:
+  user:
+    birthday-wishes-enabled: false
+  ecommerce:
+    inventory:
+      low-stock-alert-enabled: false
+
+---
+# 生产环境配置
+spring:
+  profiles: prod
+
+notification:
+  client:
+    base-url: http://notification-service:8080/notification-service
+    connect-timeout: 3000
+    read-timeout: 15000
+    max-retries: 5
+    retry-interval: 2000
+
+logging:
+  level:
+    com.enterprise.notification.client: WARN
+    root: WARN
+  
+  file:
+    name: /var/log/business-service/application.log
+
+# 生产环境安全配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.enterprise.notification.admin.mapper.NotificationMapper">
+
+    <!-- 统计查询：按渠道分组统计 -->
+    <select id="selectChannelStatistics" resultType="map">
+        SELECT 
+            channel_code as channelCode,
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
+            SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
+        FROM notifications 
+        WHERE 1=1
+        <if test="startTime != null">
+            AND created_at >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_at &lt;= #{endTime}
+        </if>
+        GROUP BY channel_code
+        ORDER BY totalCount DESC
+    </select>
+
+    <!-- 统计查询：按模板分组统计 -->
+    <select id="selectTemplateStatistics" resultType="map">
+        SELECT 
+            template_code as templateCode,
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
+            SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
+        FROM notifications 
+        WHERE 1=1
+        <if test="startTime != null">
+            AND created_at >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_at &lt;= #{endTime}
+        </if>
+        GROUP BY template_code
+        ORDER BY totalCount DESC
+    </select>
+
+    <!-- 统计查询：按小时分组统计 -->
+    <select id="selectHourlyStatistics" resultType="map">
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') as timeHour,
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
+            SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
+        FROM notifications 
+        WHERE 1=1
+        <if test="startTime != null">
+            AND created_at >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_at &lt;= #{endTime}
+        </if>
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d %H')
+        ORDER BY timeHour
+    </select>
+
+    <!-- 统计查询：按天分组统计 -->
+    <select id="selectDailyStatistics" resultType="map">
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m-%d') as timeDay,
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
+            SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
+        FROM notifications 
+        WHERE 1=1
+        <if test="startTime != null">
+            AND created_at >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_at &lt;= #{endTime}
+        </if>
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
+        ORDER BY timeDay
+    </select>
+
+    <!-- 复杂查询：获取失败通知及其重试次数 -->
+    <select id="selectFailedNotificationsWithRetryCount" resultType="map">
+        SELECT 
+            n.id,
+            n.request_id as requestId,
+            n.template_code as templateCode,
+            n.channel_code as channelCode,
+            n.recipient_id as recipientId,
+            n.error_message as errorMessage,
+            n.created_at as createdAt,
+            (SELECT COUNT(*) FROM notifications n2 
+             WHERE n2.request_id LIKE CONCAT(n.request_id, '_resend_%')) as retryCount
+        FROM notifications n
+        WHERE n.send_status = 'FAILED'
+        <if test="startTime != null">
+            AND n.created_at >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND n.created_at &lt;= #{endTime}
+        </if>
+        ORDER BY n.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

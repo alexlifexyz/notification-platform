@@ -1,0 +1,73 @@
+package com.enterprise.notification.controller;
+
+import com.enterprise.notification.common.dto.SendNotificationRequest;
+import com.enterprise.notification.common.dto.SendNotificationResponse;
+import com.enterprise.notification.service.NotificationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+/**
+ * 通知服务REST控制器
+ *
+ * @author Enterprise Team
+ * @since 1.0.0
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/notifications")
+@Validated
+public class NotificationController {
+
+    @Autowired
+    private NotificationService notificationService;
+
+    /**
+     * 发送通知
+     *
+     * @param request 发送请求
+     * @return 发送响应
+     */
+    @PostMapping("/send")
+    public ResponseEntity<SendNotificationResponse> sendNotification(
+            @Valid @RequestBody SendNotificationRequest request) {
+        
+        log.info("接收到通知发送请求: requestId={}, templateCode={}, recipientType={}, recipientId={}", 
+                request.getRequestId(), 
+                request.getTemplateCode(),
+                request.getRecipient().getType(),
+                request.getRecipient().getId());
+
+        try {
+            SendNotificationResponse response = notificationService.sendNotification(request);
+
+            log.info("通知发送请求处理完成: requestId={}, status={}",
+                    request.getRequestId(), response.getStatus());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("通知发送请求处理异常: requestId={}", request.getRequestId(), e);
+
+            SendNotificationResponse errorResponse = new SendNotificationResponse();
+            errorResponse.setRequestId(request.getRequestId());
+            errorResponse.setStatus("FAILED");
+            errorResponse.setErrorMessage("服务器内部错误: " + e.getMessage());
+            errorResponse.setProcessedAt(java.time.LocalDateTime.now());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
+    /**
+     * 健康检查
+     */
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Notification Service is running");
+    }
+}
