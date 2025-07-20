@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模板管理 - 通知平台后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        
+        /* 顶部导航 */
+        .header { height: 60px; background: #001529; color: white; display: flex; align-items: center; padding: 0 24px; }
+        .logo { font-size: 20px; font-weight: bold; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+        .lang-switch { background: #1890ff; border: none; color: white; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        
+        /* 主容器 */
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        
+        /* 侧边栏 */
+        .sidebar { width: 200px; background: white; border-right: 1px solid #f0f0f0; }
+        .menu-item { padding: 12px 24px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .menu-item:hover { background: #e6f7ff; }
+        .menu-item.active { background: #1890ff; color: white; }
+        
+        /* 内容区域 */
+        .content { flex: 1; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-title { font-size: 24px; margin-bottom: 8px; }
+        .breadcrumb { color: #666; font-size: 14px; }
+        
+        /* 搜索和操作区 */
+        .toolbar { background: white; padding: 16px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .search-form { display: flex; gap: 12px; align-items: center; }
+        .form-item { display: flex; flex-direction: column; gap: 4px; }
+        .form-item label { font-size: 12px; color: #666; }
+        .form-input, .form-select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #1890ff; color: white; }
+        .btn-default { background: white; border: 1px solid #d9d9d9; }
+        
+        /* 数据表格 */
+        .table-container { background: white; border-radius: 6px; overflow: hidden; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .table th { background: #fafafa; font-weight: 500; }
+        .table tr:hover { background: #fafafa; }
+        
+        /* 状态标签 */
+        .status-tag { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .status-enabled { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status-disabled { background: #fff2e8; color: #fa8c16; border: 1px solid #ffd591; }
+        
+        /* 操作按钮 */
+        .action-buttons { display: flex; gap: 8px; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
+        .btn-link { background: none; border: none; color: #1890ff; cursor: pointer; }
+        
+        /* 分页 */
+        .pagination { margin-top: 16px; text-align: right; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 6px; width: 600px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; text-align: right; }
+        
+        /* 表单 */
+        .form-row { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 4px; font-weight: 500; }
+        .form-control { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; }
+        .form-textarea { min-height: 100px; resize: vertical; }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="logo">🔔 通知平台管理后台</div>
+        <div class="header-right">
+            <button class="lang-switch">中文 / EN</button>
+            <span>管理员</span>
+            <button class="btn-link">退出</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="menu-item active">📝 模板管理</div>
+            <div class="menu-item">👥 收件人组管理</div>
+            <div class="menu-item">📊 通知审计</div>
+            <div class="menu-item">⚙️ 系统设置</div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <h1 class="page-title">模板管理</h1>
+                <div class="breadcrumb">首页 / 模板管理</div>
+            </div>
+
+            <!-- 工具栏 -->
+            <div class="toolbar">
+                <div class="search-form">
+                    <div class="form-item">
+                        <label>模板代码</label>
+                        <input type="text" class="form-input" placeholder="请输入模板代码">
+                    </div>
+                    <div class="form-item">
+                        <label>模板名称</label>
+                        <input type="text" class="form-input" placeholder="请输入模板名称">
+                    </div>
+                    <div class="form-item">
+                        <label>通知渠道</label>
+                        <select class="form-select">
+                            <option value="">全部渠道</option>
+                            <option value="IN_APP">站内信</option>
+                            <option value="SMS">短信</option>
+                            <option value="EMAIL">邮件</option>
+                            <option value="IM">企业IM</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>状态</label>
+                        <select class="form-select">
+                            <option value="">全部状态</option>
+                            <option value="true">启用</option>
+                            <option value="false">禁用</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary">🔍 搜索</button>
+                    <button class="btn btn-default">🔄 重置</button>
+                </div>
+                <button class="btn btn-primary">➕ 新建模板</button>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>模板代码</th>
+                            <th>模板名称</th>
+                            <th>通知渠道</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>USER_REGISTER_WELCOME</td>
+                            <td>用户注册欢迎</td>
+                            <td>站内信</td>
+                            <td><span class="status-tag status-enabled">启用</span></td>
+                            <td>2024-01-15 10:30:00</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-link btn-sm">查看</button>
+                                    <button class="btn btn-link btn-sm">编辑</button>
+                                    <button class="btn btn-link btn-sm">测试</button>
+                                    <button class="btn btn-link btn-sm">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>ORDER_SHIPPED</td>
+                            <td>订单发货通知</td>
+                            <td>短信</td>
+                            <td><span class="status-tag status-enabled">启用</span></td>
+                            <td>2024-01-15 09:15:00</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-link btn-sm">查看</button>
+                                    <button class="btn btn-link btn-sm">编辑</button>
+                                    <button class="btn btn-link btn-sm">测试</button>
+                                    <button class="btn btn-link btn-sm">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>EMAIL_WELCOME</td>
+                            <td>欢迎邮件</td>
+                            <td>邮件</td>
+                            <td><span class="status-tag status-disabled">禁用</span></td>
+                            <td>2024-01-14 16:45:00</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-link btn-sm">查看</button>
+                                    <button class="btn btn-link btn-sm">编辑</button>
+                                    <button class="btn btn-link btn-sm">测试</button>
+                                    <button class="btn btn-link btn-sm">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- 分页 -->
+                <div class="pagination">
+                    <span>共 25 条记录，第 1/3 页</span>
+                    <button class="btn btn-default btn-sm">上一页</button>
+                    <button class="btn btn-primary btn-sm">1</button>
+                    <button class="btn btn-default btn-sm">2</button>
+                    <button class="btn btn-default btn-sm">3</button>
+                    <button class="btn btn-default btn-sm">下一页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建/编辑模板模态框 -->
+    <div class="modal" id="templateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新建模板</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <label class="form-label">模板代码 *</label>
+                    <input type="text" class="form-control" placeholder="请输入模板代码，如：USER_WELCOME">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">模板名称 *</label>
+                    <input type="text" class="form-control" placeholder="请输入模板名称">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">通知渠道 *</label>
+                    <select class="form-control">
+                        <option value="">请选择通知渠道</option>
+                        <option value="IN_APP">站内信</option>
+                        <option value="SMS">短信</option>
+                        <option value="EMAIL">邮件</option>
+                        <option value="IM">企业IM</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">主题/标题</label>
+                    <input type="text" class="form-control" placeholder="请输入主题，支持变量 ${variable}">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">内容模板 *</label>
+                    <textarea class="form-control form-textarea" placeholder="请输入内容模板，支持变量 ${variable}"></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">第三方模板代码</label>
+                    <input type="text" class="form-control" placeholder="第三方服务商的模板ID（可选）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">
+                        <input type="checkbox" checked> 启用模板
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default">取消</button>
+                <button class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

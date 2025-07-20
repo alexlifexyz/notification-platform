@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收件人组管理 - 通知平台后台</title>
+    <link rel="stylesheet" href="template-management.html">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; line-height: 1.6; }
+
+        /* 顶部导航 */
+        .header { height: 60px; background: #001529; color: white; display: flex; align-items: center; padding: 0 24px; }
+        .logo { font-size: 20px; font-weight: bold; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+        .lang-switch { background: #1890ff; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+
+        /* 主容器 */
+        .container { display: flex; min-height: calc(100vh - 60px); }
+
+        /* 侧边栏 */
+        .sidebar { width: 200px; background: white; border-right: 1px solid #f0f0f0; }
+        .menu-item { padding: 14px 24px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; transition: all 0.3s; }
+        .menu-item:hover { background: #e6f7ff; }
+        .menu-item.active { background: #1890ff; color: white; }
+
+        /* 内容区域 */
+        .content { flex: 1; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-title { font-size: 24px; margin-bottom: 8px; color: #333; }
+        .breadcrumb { color: #666; font-size: 14px; }
+
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.3s; }
+        .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .stat-number { font-size: 28px; font-weight: bold; color: #1890ff; margin-bottom: 8px; }
+        .stat-label { font-size: 14px; color: #666; }
+
+        /* 搜索和操作区 */
+        .toolbar { background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .search-form { display: flex; gap: 12px; align-items: center; }
+        .form-item { display: flex; flex-direction: column; gap: 4px; }
+        .form-item label { font-size: 12px; color: #666; font-weight: 500; }
+        .form-input, .form-select { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.2); }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .btn-primary { background: #1890ff; color: white; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-default { background: white; border: 1px solid #d9d9d9; }
+        .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+
+        /* 数据表格 */
+        .table-container { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .table th { background: #fafafa; font-weight: 500; color: #666; font-size: 14px; }
+        .table tr:hover { background: #fafafa; }
+
+        /* 状态标签 */
+        .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .status-enabled { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status-disabled { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+
+        /* 操作按钮 */
+        .action-buttons { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-link { background: none; border: none; color: #1890ff; cursor: pointer; }
+        .btn-link:hover { color: #40a9ff; }
+
+        /* 分页 */
+        .pagination { margin-top: 16px; text-align: right; padding: 16px; background: white; border-radius: 8px; }
+
+        /* 标签页 */
+        .tabs { border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+        .tab-item { display: inline-block; padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 14px; font-weight: 500; }
+        .tab-item.active { color: #1890ff; border-bottom-color: #1890ff; }
+        .tab-item:hover { color: #1890ff; }
+
+        /* 组详情卡片 */
+        .group-detail-card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .group-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .info-item { }
+        .info-label { font-size: 12px; color: #666; margin-bottom: 4px; font-weight: 500; }
+        .info-value { font-size: 14px; font-weight: 500; color: #333; }
+
+        /* 成员管理区域 */
+        .members-section { }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 16px; font-weight: 500; color: #333; }
+
+        /* 成员表格优化 */
+        .member-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #1890ff, #40a9ff); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
+        .member-info { display: flex; align-items: center; gap: 12px; }
+        .member-details { }
+        .member-name { font-weight: 500; font-size: 14px; color: #333; margin-bottom: 2px; }
+        .member-contact { font-size: 12px; color: #666; }
+
+        /* 联系方式优化 */
+        .contact-info { }
+        .contact-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; }
+        .contact-icon { width: 16px; text-align: center; }
+        .contact-value { color: #333; }
+
+        /* 偏好渠道标签优化 */
+        .channel-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .channel-tag { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+        .channel-inapp { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+        .channel-sms { background: #fff2e8; color: #fa8c16; border: 1px solid #ffd591; }
+        .channel-email { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .channel-im { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .content { padding: 16px; }
+            .toolbar { flex-direction: column; gap: 16px; }
+            .search-form { flex-wrap: wrap; }
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .group-info { grid-template-columns: 1fr; }
+            .table-container { overflow-x: auto; }
+            .table { min-width: 600px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="logo">🔔 通知平台管理后台</div>
+        <div class="header-right">
+            <button class="lang-switch">中文 / EN</button>
+            <span>管理员</span>
+            <button class="btn-link">退出</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="menu-item">📝 模板管理</div>
+            <div class="menu-item active">👥 收件人组管理</div>
+            <div class="menu-item">📊 通知审计</div>
+            <div class="menu-item">⚙️ 系统设置</div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <h1 class="page-title">收件人组管理</h1>
+                <div class="breadcrumb">首页 / 收件人组管理</div>
+            </div>
+
+            <!-- 统计概览 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">8</div>
+                    <div class="stat-label">总组数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">156</div>
+                    <div class="stat-label">总成员数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">启用组数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">142</div>
+                    <div class="stat-label">活跃成员</div>
+                </div>
+            </div>
+
+            <!-- 标签页 -->
+            <div class="tabs">
+                <div class="tab-item active">组列表</div>
+                <div class="tab-item">组详情</div>
+            </div>
+
+            <!-- 组列表视图 -->
+            <div id="groupListView">
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="search-form">
+                        <div class="form-item">
+                            <label>组代码</label>
+                            <input type="text" class="form-input" placeholder="请输入组代码">
+                        </div>
+                        <div class="form-item">
+                            <label>组名称</label>
+                            <input type="text" class="form-input" placeholder="请输入组名称">
+                        </div>
+                        <div class="form-item">
+                            <label>状态</label>
+                            <select class="form-select">
+                                <option value="">全部状态</option>
+                                <option value="true">启用</option>
+                                <option value="false">禁用</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary">🔍 搜索</button>
+                        <button class="btn btn-default">🔄 重置</button>
+                    </div>
+                    <button class="btn btn-primary">➕ 新建组</button>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>组代码</th>
+                                <th>组名称</th>
+                                <th>描述</th>
+                                <th>成员数量</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ADMIN_GROUP</td>
+                                <td>系统管理员组</td>
+                                <td>系统管理员组，接收系统重要通知和安全告警</td>
+                                <td>2</td>
+                                <td><span class="status-tag status-enabled">启用</span></td>
+                                <td>2024-01-15 10:30:00</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm">编辑</button>
+                                        <button class="btn btn-link btn-sm">成员</button>
+                                        <button class="btn btn-link btn-sm">删除</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>OPS_TEAM</td>
+                                <td>运维团队</td>
+                                <td>运维团队，接收系统运维、部署、监控相关通知</td>
+                                <td>3</td>
+                                <td><span class="status-tag status-enabled">启用</span></td>
+                                <td>2024-01-15 09:15:00</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm">编辑</button>
+                                        <button class="btn btn-link btn-sm">成员</button>
+                                        <button class="btn btn-link btn-sm">删除</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>DEV_TEAM</td>
+                                <td>开发团队</td>
+                                <td>开发团队，接收开发、测试、发布相关通知</td>
+                                <td>4</td>
+                                <td><span class="status-tag status-enabled">启用</span></td>
+                                <td>2024-01-14 16:45:00</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm">编辑</button>
+                                        <button class="btn btn-link btn-sm">成员</button>
+                                        <button class="btn btn-link btn-sm">删除</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- 分页 -->
+                    <div class="pagination">
+                        <span>共 8 条记录，第 1/1 页</span>
+                        <button class="btn btn-default btn-sm">上一页</button>
+                        <button class="btn btn-primary btn-sm">1</button>
+                        <button class="btn btn-default btn-sm">下一页</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 组详情视图 -->
+            <div id="groupDetailView" style="display: none;">
+                <!-- 组基本信息 -->
+                <div class="group-detail-card">
+                    <h3>组基本信息</h3>
+                    <div class="group-info">
+                        <div class="info-item">
+                            <div class="info-label">组代码</div>
+                            <div class="info-value">ADMIN_GROUP</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">组名称</div>
+                            <div class="info-value">系统管理员组</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">状态</div>
+                            <div class="info-value"><span class="status-tag status-enabled">启用</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">成员数量</div>
+                            <div class="info-value">2</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">创建时间</div>
+                            <div class="info-value">2024-01-15 10:30:00</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">更新时间</div>
+                            <div class="info-value">2024-01-15 10:30:00</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">描述</div>
+                        <div class="info-value">系统管理员组，接收系统重要通知和安全告警</div>
+                    </div>
+                </div>
+
+                <!-- 成员管理 -->
+                <div class="group-detail-card">
+                    <div class="section-header">
+                        <h3 class="section-title">成员管理</h3>
+                        <button class="btn btn-primary">➕ 添加成员</button>
+                    </div>
+
+                    <!-- 成员表格 -->
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>成员信息</th>
+                                    <th>联系方式</th>
+                                    <th>偏好渠道</th>
+                                    <th>状态</th>
+                                    <th>加入时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="member-info">
+                                            <div class="member-avatar">张</div>
+                                            <div class="member-details">
+                                                <div class="member-name">张三 - 系统管理员</div>
+                                                <div class="member-contact">用户ID: admin001</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="contact-info">
+                                            <div class="contact-item">
+                                                <span class="contact-icon">📱</span>
+                                                <span class="contact-value">13800138000</span>
+                                            </div>
+                                            <div class="contact-item">
+                                                <span class="contact-icon">📧</span>
+                                                <span class="contact-value">zhangsan@company.com</span>
+                                            </div>
+                                            <div class="contact-item">
+                                                <span class="contact-icon">💬</span>
+                                                <span class="contact-value">zhangsan</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="channel-tags">
+                                            <span class="channel-tag channel-inapp">站内信</span>
+                                            <span class="channel-tag channel-email">邮件</span>
+                                            <span class="channel-tag channel-im">IM</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-tag status-enabled">启用</span></td>
+                                    <td>2024-01-15 10:30:00</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-link btn-sm">编辑</button>
+                                            <button class="btn btn-link btn-sm">移除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="member-info">
+                                            <div class="member-avatar">李</div>
+                                            <div class="member-details">
+                                                <div class="member-name">李四 - 安全管理员</div>
+                                                <div class="member-contact">用户ID: admin002</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="contact-info">
+                                            <div class="contact-item">
+                                                <span class="contact-icon">📱</span>
+                                                <span class="contact-value">13800138001</span>
+                                            </div>
+                                            <div class="contact-item">
+                                                <span class="contact-icon">📧</span>
+                                                <span class="contact-value">lisi@company.com</span>
+                                            </div>
+                                            <div class="contact-item">
+                                                <span class="contact-icon">💬</span>
+                                                <span class="contact-value">lisi</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="channel-tags">
+                                            <span class="channel-tag channel-inapp">站内信</span>
+                                            <span class="channel-tag channel-email">邮件</span>
+                                            <span class="channel-tag channel-sms">短信</span>
+                                            <span class="channel-tag channel-im">IM</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-tag status-enabled">启用</span></td>
+                                    <td>2024-01-15 10:30:00</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-link btn-sm">编辑</button>
+                                            <button class="btn btn-link btn-sm">移除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

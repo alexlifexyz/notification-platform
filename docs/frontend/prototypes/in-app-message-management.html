@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>站内信管理 - 通知平台后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        
+        /* 基础样式 */
+        .header { height: 60px; background: #001529; color: white; display: flex; align-items: center; padding: 0 24px; }
+        .logo { font-size: 20px; font-weight: bold; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+        .lang-switch { background: #1890ff; border: none; color: white; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar { width: 200px; background: white; border-right: 1px solid #f0f0f0; }
+        .menu-item { padding: 12px 24px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .menu-item:hover { background: #e6f7ff; }
+        .menu-item.active { background: #1890ff; color: white; }
+        
+        .content { flex: 1; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-title { font-size: 24px; margin-bottom: 8px; }
+        .breadcrumb { color: #666; font-size: 14px; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; text-align: center; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .stat-icon { font-size: 32px; margin-bottom: 12px; }
+        .stat-number { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+        .stat-label { font-size: 14px; color: #666; }
+        .stat-trend { position: absolute; top: 16px; right: 16px; font-size: 12px; }
+        .trend-up { color: #52c41a; }
+        .trend-down { color: #ff4d4f; }
+        
+        .stat-total .stat-number { color: #1890ff; }
+        .stat-unread .stat-number { color: #ff4d4f; }
+        .stat-read .stat-number { color: #52c41a; }
+        .stat-rate .stat-number { color: #722ed1; }
+        
+        /* 工具栏 */
+        .toolbar { background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .search-form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+        .form-item { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+        .form-item label { font-size: 12px; color: #666; font-weight: 500; }
+        .form-input, .form-select { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.2); }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .btn-primary { background: #1890ff; color: white; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-default { background: white; border: 1px solid #d9d9d9; color: #666; }
+        .btn-success { background: #52c41a; color: white; }
+        .btn-warning { background: #faad14; color: white; }
+        .btn-danger { background: #ff4d4f; color: white; }
+        
+        /* 批量操作栏 */
+        .batch-toolbar { background: #e6f7ff; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: none; align-items: center; justify-content: space-between; }
+        .batch-info { color: #1890ff; font-weight: 500; }
+        .batch-actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        
+        /* 消息列表 */
+        .message-list { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .message-item { padding: 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: all 0.3s; position: relative; }
+        .message-item:hover { background: #fafafa; }
+        .message-item.unread { background: #f6ffed; border-left: 4px solid #52c41a; }
+        .message-item.selected { background: #e6f7ff; }
+        
+        .message-header { display: flex; align-items: center; justify-content: between; margin-bottom: 8px; }
+        .message-checkbox { margin-right: 12px; }
+        .message-user { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1890ff; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .user-info { flex: 1; }
+        .user-name { font-weight: 500; font-size: 14px; }
+        .user-id { font-size: 12px; color: #666; }
+        .message-time { font-size: 12px; color: #666; }
+        .message-status { margin-left: 12px; }
+        
+        .message-content { margin-left: 44px; }
+        .message-subject { font-weight: 500; margin-bottom: 4px; color: #333; }
+        .message-preview { color: #666; font-size: 14px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        
+        .message-actions { margin-left: 44px; margin-top: 8px; display: flex; gap: 8px; }
+        .action-btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .action-btn.read { background: #f6ffed; color: #52c41a; }
+        .action-btn.unread { background: #fff2f0; color: #ff4d4f; }
+        .action-btn.delete { background: #fff2f0; color: #ff4d4f; }
+        
+        /* 状态标签 */
+        .status-tag { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+        .status-read { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status-unread { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+        
+        /* 分页 */
+        .pagination { margin-top: 16px; text-align: right; padding: 16px; background: white; border-radius: 8px; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; width: 700px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; text-align: right; }
+        
+        /* 消息详情 */
+        .message-detail-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0; }
+        .detail-user { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .detail-avatar { width: 48px; height: 48px; border-radius: 50%; background: #1890ff; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; }
+        .detail-info h3 { margin-bottom: 4px; }
+        .detail-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .meta-item { }
+        .meta-label { font-size: 12px; color: #666; margin-bottom: 2px; }
+        .meta-value { font-size: 14px; font-weight: 500; }
+        
+        .message-detail-content { }
+        .detail-subject { font-size: 18px; font-weight: 500; margin-bottom: 16px; color: #333; }
+        .detail-content { line-height: 1.6; color: #333; background: #fafafa; padding: 16px; border-radius: 6px; white-space: pre-wrap; }
+        
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .content { padding: 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .search-form { flex-direction: column; align-items: stretch; }
+            .form-item { min-width: auto; }
+            .message-content { margin-left: 0; margin-top: 8px; }
+            .message-actions { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="logo">🔔 通知平台管理后台</div>
+        <div class="header-right">
+            <button class="lang-switch">中文 / EN</button>
+            <span>管理员</span>
+            <button class="btn-link">退出</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="menu-item">📝 模板管理</div>
+            <div class="menu-item">👥 收件人组管理</div>
+            <div class="menu-item">📊 通知审计</div>
+            <div class="menu-item">📡 渠道管理</div>
+            <div class="menu-item active">💬 站内信管理</div>
+            <div class="menu-item">⚙️ 系统设置</div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <h1 class="page-title">站内信管理</h1>
+                <div class="breadcrumb">首页 / 站内信管理</div>
+            </div>
+
+            <!-- 统计概览 -->
+            <div class="stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-trend trend-up">↗ +12%</div>
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-number">2,456</div>
+                    <div class="stat-label">总消息数</div>
+                </div>
+                <div class="stat-card stat-unread">
+                    <div class="stat-trend trend-down">↘ -5%</div>
+                    <div class="stat-icon">🔴</div>
+                    <div class="stat-number">234</div>
+                    <div class="stat-label">未读消息</div>
+                </div>
+                <div class="stat-card stat-read">
+                    <div class="stat-trend trend-up">↗ +8%</div>
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number">2,222</div>
+                    <div class="stat-label">已读消息</div>
+                </div>
+                <div class="stat-card stat-rate">
+                    <div class="stat-trend trend-up">↗ +2%</div>
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-number">90.5%</div>
+                    <div class="stat-label">阅读率</div>
+                </div>
+            </div>
+
+            <!-- 搜索工具栏 -->
+            <div class="toolbar">
+                <div class="search-form">
+                    <div class="form-item">
+                        <label>用户ID</label>
+                        <input type="text" class="form-input" placeholder="请输入用户ID">
+                    </div>
+                    <div class="form-item">
+                        <label>用户名称</label>
+                        <input type="text" class="form-input" placeholder="请输入用户名称">
+                    </div>
+                    <div class="form-item">
+                        <label>消息主题</label>
+                        <input type="text" class="form-input" placeholder="请输入消息主题">
+                    </div>
+                    <div class="form-item">
+                        <label>阅读状态</label>
+                        <select class="form-select">
+                            <option value="">全部状态</option>
+                            <option value="false">未读</option>
+                            <option value="true">已读</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>开始时间</label>
+                        <input type="date" class="form-input">
+                    </div>
+                    <div class="form-item">
+                        <label>结束时间</label>
+                        <input type="date" class="form-input">
+                    </div>
+                    <div class="form-item">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary">🔍 搜索</button>
+                    </div>
+                    <div class="form-item">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-default">🔄 重置</button>
+                    </div>
+                    <div class="form-item">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-success">📊 导出</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 批量操作栏 -->
+            <div class="batch-toolbar" id="batchToolbar">
+                <div class="batch-info">
+                    已选择 <span id="selectedCount">0</span> 条消息
+                </div>
+                <div class="batch-actions">
+                    <button class="btn btn-success btn-sm">✅ 批量标记已读</button>
+                    <button class="btn btn-warning btn-sm">🔄 批量标记未读</button>
+                    <button class="btn btn-danger btn-sm">🗑️ 批量删除</button>
+                </div>
+            </div>
+
+            <!-- 消息列表 -->
+            <div class="message-list">
+                <!-- 消息项1 - 未读 -->
+                <div class="message-item unread">
+                    <div class="message-header">
+                        <input type="checkbox" class="message-checkbox" onchange="toggleSelection(this)">
+                        <div class="message-user">
+                            <div class="user-avatar">张</div>
+                            <div class="user-info">
+                                <div class="user-name">张三</div>
+                                <div class="user-id">user123</div>
+                            </div>
+                        </div>
+                        <div class="message-time">2024-01-15 10:30:15</div>
+                        <div class="message-status">
+                            <span class="status-tag status-unread">未读</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-subject">欢迎加入我们！</div>
+                        <div class="message-preview">亲爱的 张三，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。我们为您准备了丰富的功能和优质的服务...</div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="action-btn read" onclick="markAsRead(1)">✅ 标记已读</button>
+                        <button class="action-btn" onclick="viewMessage(1)">👁️ 查看详情</button>
+                        <button class="action-btn delete" onclick="deleteMessage(1)">🗑️ 删除</button>
+                    </div>
+                </div>
+
+                <!-- 消息项2 - 已读 -->
+                <div class="message-item">
+                    <div class="message-header">
+                        <input type="checkbox" class="message-checkbox" onchange="toggleSelection(this)">
+                        <div class="message-user">
+                            <div class="user-avatar">李</div>
+                            <div class="user-info">
+                                <div class="user-name">李四</div>
+                                <div class="user-id">user456</div>
+                            </div>
+                        </div>
+                        <div class="message-time">2024-01-15 09:15:30</div>
+                        <div class="message-status">
+                            <span class="status-tag status-read">已读</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-subject">系统维护通知</div>
+                        <div class="message-preview">系统将于 2024-01-15 02:00:00 开始维护，预计持续 2小时，维护期间服务可能受到影响，敬请谅解。</div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="action-btn unread" onclick="markAsUnread(2)">🔄 标记未读</button>
+                        <button class="action-btn" onclick="viewMessage(2)">👁️ 查看详情</button>
+                        <button class="action-btn delete" onclick="deleteMessage(2)">🗑️ 删除</button>
+                    </div>
+                </div>
+
+                <!-- 消息项3 - 未读 -->
+                <div class="message-item unread">
+                    <div class="message-header">
+                        <input type="checkbox" class="message-checkbox" onchange="toggleSelection(this)">
+                        <div class="message-user">
+                            <div class="user-avatar">王</div>
+                            <div class="user-info">
+                                <div class="user-name">王五</div>
+                                <div class="user-id">user789</div>
+                            </div>
+                        </div>
+                        <div class="message-time">2024-01-15 08:45:22</div>
+                        <div class="message-status">
+                            <span class="status-tag status-unread">未读</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-subject">您的订单已发货</div>
+                        <div class="message-preview">您的订单 ORD20240115001 已发货，快递单号：SF1234567890，预计 3 天内送达。请注意查收，如有问题请联系客服。</div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="action-btn read" onclick="markAsRead(3)">✅ 标记已读</button>
+                        <button class="action-btn" onclick="viewMessage(3)">👁️ 查看详情</button>
+                        <button class="action-btn delete" onclick="deleteMessage(3)">🗑️ 删除</button>
+                    </div>
+                </div>
+
+                <!-- 消息项4 - 已读 -->
+                <div class="message-item">
+                    <div class="message-header">
+                        <input type="checkbox" class="message-checkbox" onchange="toggleSelection(this)">
+                        <div class="message-user">
+                            <div class="user-avatar">赵</div>
+                            <div class="user-info">
+                                <div class="user-name">赵六</div>
+                                <div class="user-id">user101</div>
+                            </div>
+                        </div>
+                        <div class="message-time">2024-01-14 16:20:45</div>
+                        <div class="message-status">
+                            <span class="status-tag status-read">已读</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-subject">账户安全提醒</div>
+                        <div class="message-preview">检测到您的账户在 2024-01-14 16:15:30 从 北京市 登录，如非本人操作请及时修改密码。</div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="action-btn unread" onclick="markAsUnread(4)">🔄 标记未读</button>
+                        <button class="action-btn" onclick="viewMessage(4)">👁️ 查看详情</button>
+                        <button class="action-btn delete" onclick="deleteMessage(4)">🗑️ 删除</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+                <span>共 2,456 条记录，第 1/246 页</span>
+                <button class="btn btn-default btn-sm">上一页</button>
+                <button class="btn btn-primary btn-sm">1</button>
+                <button class="btn btn-default btn-sm">2</button>
+                <button class="btn btn-default btn-sm">3</button>
+                <button class="btn btn-default btn-sm">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 消息详情模态框 -->
+    <div class="modal" id="messageDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>消息详情</h3>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="message-detail-header">
+                    <div class="detail-user">
+                        <div class="detail-avatar">张</div>
+                        <div class="detail-info">
+                            <h3>张三 (user123)</h3>
+                            <div style="color: #666; font-size: 14px;">用户详细信息</div>
+                        </div>
+                    </div>
+                    <div class="detail-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">消息ID</div>
+                            <div class="meta-value">1001</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">关联通知ID</div>
+                            <div class="meta-value">2001</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">阅读状态</div>
+                            <div class="meta-value"><span class="status-tag status-unread">未读</span></div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">创建时间</div>
+                            <div class="meta-value">2024-01-15 10:30:15</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">阅读时间</div>
+                            <div class="meta-value">-</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">更新时间</div>
+                            <div class="meta-value">2024-01-15 10:30:15</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="message-detail-content">
+                    <div class="detail-subject">欢迎加入我们！</div>
+                    <div class="detail-content">亲爱的 张三，欢迎您注册成为我们的用户！
+
+您的账号已激活，可以开始使用我们的服务了。我们为您准备了丰富的功能和优质的服务，希望能为您带来便利和价值。
+
+如果您在使用过程中遇到任何问题，请随时联系我们的客服团队，我们将竭诚为您服务。
+
+祝您使用愉快！
+
+企业通知平台团队</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success">✅ 标记已读</button>
+                <button class="btn btn-danger">🗑️ 删除消息</button>
+                <button class="btn btn-default" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCount = 0;
+
+        function toggleSelection(checkbox) {
+            if (checkbox.checked) {
+                selectedCount++;
+                checkbox.closest('.message-item').classList.add('selected');
+            } else {
+                selectedCount--;
+                checkbox.closest('.message-item').classList.remove('selected');
+            }
+            
+            document.getElementById('selectedCount').textContent = selectedCount;
+            document.getElementById('batchToolbar').style.display = selectedCount > 0 ? 'flex' : 'none';
+        }
+
+        function markAsRead(id) {
+            console.log('标记消息已读:', id);
+            // 实际实现中会调用API
+        }
+
+        function markAsUnread(id) {
+            console.log('标记消息未读:', id);
+            // 实际实现中会调用API
+        }
+
+        function deleteMessage(id) {
+            if (confirm('确定要删除这条消息吗？')) {
+                console.log('删除消息:', id);
+                // 实际实现中会调用API
+            }
+        }
+
+        function viewMessage(id) {
+            console.log('查看消息详情:', id);
+            document.getElementById('messageDetailModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('messageDetailModal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('messageDetailModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

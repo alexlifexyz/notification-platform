@@ -16,4 +16,5 @@
 /tasks.xml
 /vcs.xml
 /inspectionProfiles/
+*.xml
 

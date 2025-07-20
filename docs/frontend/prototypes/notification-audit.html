@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知审计监控 - 通知平台后台</title>
+    <style>
+        /* 继承基础样式 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        
+        .header { height: 60px; background: #001529; color: white; display: flex; align-items: center; padding: 0 24px; }
+        .logo { font-size: 20px; font-weight: bold; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+        .lang-switch { background: #1890ff; border: none; color: white; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar { width: 200px; background: white; border-right: 1px solid #f0f0f0; }
+        .menu-item { padding: 12px 24px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .menu-item:hover { background: #e6f7ff; }
+        .menu-item.active { background: #1890ff; color: white; }
+        
+        .content { flex: 1; padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-title { font-size: 24px; margin-bottom: 8px; }
+        .breadcrumb { color: #666; font-size: 14px; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 6px; padding: 20px; text-align: center; position: relative; }
+        .stat-number { font-size: 28px; font-weight: bold; margin-bottom: 8px; }
+        .stat-label { font-size: 14px; color: #666; }
+        .stat-trend { position: absolute; top: 16px; right: 16px; font-size: 12px; }
+        .trend-up { color: #52c41a; }
+        .trend-down { color: #ff4d4f; }
+        
+        .stat-success .stat-number { color: #52c41a; }
+        .stat-pending .stat-number { color: #faad14; }
+        .stat-failed .stat-number { color: #ff4d4f; }
+        .stat-total .stat-number { color: #1890ff; }
+        
+        /* 图表区域 */
+        .charts-section { margin-bottom: 24px; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .chart-card { background: white; border-radius: 6px; padding: 20px; }
+        .chart-title { font-size: 16px; font-weight: 500; margin-bottom: 16px; }
+        .chart-placeholder { height: 300px; background: #fafafa; border: 2px dashed #d9d9d9; display: flex; align-items: center; justify-content: center; color: #999; }
+        
+        /* 工具栏 */
+        .toolbar { background: white; padding: 16px; border-radius: 6px; margin-bottom: 16px; }
+        .search-form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+        .form-item { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+        .form-item label { font-size: 12px; color: #666; }
+        .form-input, .form-select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #1890ff; color: white; }
+        .btn-default { background: white; border: 1px solid #d9d9d9; }
+        .btn-success { background: #52c41a; color: white; }
+        .btn-warning { background: #faad14; color: white; }
+        
+        /* 表格 */
+        .table-container { background: white; border-radius: 6px; overflow: hidden; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .table th { background: #fafafa; font-weight: 500; }
+        .table tr:hover { background: #fafafa; }
+        
+        /* 状态标签 */
+        .status-tag { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .status-success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status-pending { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+        .status-failed { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+        
+        /* 渠道标签 */
+        .channel-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+        .channel-inapp { background: #e6f7ff; color: #1890ff; }
+        .channel-sms { background: #fff2e8; color: #fa8c16; }
+        .channel-email { background: #f6ffed; color: #52c41a; }
+        .channel-im { background: #f9f0ff; color: #722ed1; }
+        
+        /* 操作按钮 */
+        .action-buttons { display: flex; gap: 8px; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
+        .btn-link { background: none; border: none; color: #1890ff; cursor: pointer; }
+        
+        /* 分页 */
+        .pagination { margin-top: 16px; text-align: right; }
+        
+        /* 标签页 */
+        .tabs { border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+        .tab-item { display: inline-block; padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab-item.active { color: #1890ff; border-bottom-color: #1890ff; }
+        .tab-item:hover { color: #1890ff; }
+        
+        /* 详情模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 6px; width: 800px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; text-align: right; }
+        
+        /* 详情信息 */
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .detail-item { }
+        .detail-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+        .detail-value { font-size: 14px; font-weight: 500; }
+        .detail-content { background: #fafafa; padding: 12px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="logo">🔔 通知平台管理后台</div>
+        <div class="header-right">
+            <button class="lang-switch">中文 / EN</button>
+            <span>管理员</span>
+            <button class="btn-link">退出</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="menu-item">📝 模板管理</div>
+            <div class="menu-item">👥 收件人组管理</div>
+            <div class="menu-item active">📊 通知审计</div>
+            <div class="menu-item">⚙️ 系统设置</div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <h1 class="page-title">通知审计监控</h1>
+                <div class="breadcrumb">首页 / 通知审计监控</div>
+            </div>
+
+            <!-- 统计概览 -->
+            <div class="stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-trend trend-up">↗ +12%</div>
+                    <div class="stat-number">1,234</div>
+                    <div class="stat-label">今日总发送量</div>
+                </div>
+                <div class="stat-card stat-success">
+                    <div class="stat-trend trend-up">↗ +5%</div>
+                    <div class="stat-number">1,156</div>
+                    <div class="stat-label">发送成功</div>
+                </div>
+                <div class="stat-card stat-pending">
+                    <div class="stat-trend">→ 0%</div>
+                    <div class="stat-number">23</div>
+                    <div class="stat-label">发送中</div>
+                </div>
+                <div class="stat-card stat-failed">
+                    <div class="stat-trend trend-down">↘ -2%</div>
+                    <div class="stat-number">55</div>
+                    <div class="stat-label">发送失败</div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-section">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">📈 发送趋势图（最近7天）</div>
+                        <div class="chart-placeholder">
+                            发送趋势图表<br>
+                            <small>显示每日发送量、成功率等趋势</small>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">🥧 渠道分布</div>
+                        <div class="chart-placeholder">
+                            渠道分布饼图<br>
+                            <small>各渠道发送量占比</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">📊 模板使用排行</div>
+                    <div class="chart-placeholder">
+                        模板使用排行柱状图<br>
+                        <small>显示最常用的模板及其使用次数</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签页 -->
+            <div class="tabs">
+                <div class="tab-item active">通知记录</div>
+                <div class="tab-item">统计分析</div>
+                <div class="tab-item">实时监控</div>
+            </div>
+
+            <!-- 通知记录视图 -->
+            <div id="recordsView">
+                <!-- 搜索工具栏 -->
+                <div class="toolbar">
+                    <div class="search-form">
+                        <div class="form-item">
+                            <label>请求ID</label>
+                            <input type="text" class="form-input" placeholder="请输入请求ID">
+                        </div>
+                        <div class="form-item">
+                            <label>模板代码</label>
+                            <input type="text" class="form-input" placeholder="请输入模板代码">
+                        </div>
+                        <div class="form-item">
+                            <label>通知渠道</label>
+                            <select class="form-select">
+                                <option value="">全部渠道</option>
+                                <option value="IN_APP">站内信</option>
+                                <option value="SMS">短信</option>
+                                <option value="EMAIL">邮件</option>
+                                <option value="IM">企业IM</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label>发送状态</label>
+                            <select class="form-select">
+                                <option value="">全部状态</option>
+                                <option value="SUCCESS">成功</option>
+                                <option value="PENDING">发送中</option>
+                                <option value="FAILED">失败</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label>接收者ID</label>
+                            <input type="text" class="form-input" placeholder="用户ID或组代码">
+                        </div>
+                        <div class="form-item">
+                            <label>开始时间</label>
+                            <input type="datetime-local" class="form-input">
+                        </div>
+                        <div class="form-item">
+                            <label>结束时间</label>
+                            <input type="datetime-local" class="form-input">
+                        </div>
+                        <div class="form-item">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary">🔍 搜索</button>
+                        </div>
+                        <div class="form-item">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-default">🔄 重置</button>
+                        </div>
+                        <div class="form-item">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-success">📊 导出</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>请求ID</th>
+                                <th>模板信息</th>
+                                <th>渠道</th>
+                                <th>接收者</th>
+                                <th>发送状态</th>
+                                <th>发送时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>user_welcome_001</td>
+                                <td>
+                                    <div>
+                                        <div style="font-weight: 500;">USER_REGISTER_WELCOME</div>
+                                        <div style="font-size: 12px; color: #666;">用户注册欢迎</div>
+                                    </div>
+                                </td>
+                                <td><span class="channel-tag channel-inapp">站内信</span></td>
+                                <td>
+                                    <div>
+                                        <div>个人: user123</div>
+                                        <div style="font-size: 12px; color: #666;">张三</div>
+                                    </div>
+                                </td>
+                                <td><span class="status-tag status-success">发送成功</span></td>
+                                <td>2024-01-15 10:30:15</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm">重发</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>maintenance_001</td>
+                                <td>
+                                    <div>
+                                        <div style="font-weight: 500;">SYSTEM_MAINTENANCE</div>
+                                        <div style="font-size: 12px; color: #666;">系统维护通知</div>
+                                    </div>
+                                </td>
+                                <td><span class="channel-tag channel-inapp">站内信</span></td>
+                                <td>
+                                    <div>
+                                        <div>组: ALL_EMPLOYEES</div>
+                                        <div style="font-size: 12px; color: #666;">全体员工 (15人)</div>
+                                    </div>
+                                </td>
+                                <td><span class="status-tag status-success">发送成功</span></td>
+                                <td>2024-01-15 09:15:30</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm">重发</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>sms_verify_002</td>
+                                <td>
+                                    <div>
+                                        <div style="font-weight: 500;">SMS_VERIFY_CODE</div>
+                                        <div style="font-size: 12px; color: #666;">短信验证码</div>
+                                    </div>
+                                </td>
+                                <td><span class="channel-tag channel-sms">短信</span></td>
+                                <td>
+                                    <div>
+                                        <div>个人: user456</div>
+                                        <div style="font-size: 12px; color: #666;">李四</div>
+                                    </div>
+                                </td>
+                                <td><span class="status-tag status-failed">发送失败</span></td>
+                                <td>2024-01-15 08:45:22</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm">重发</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>email_welcome_003</td>
+                                <td>
+                                    <div>
+                                        <div style="font-weight: 500;">EMAIL_WELCOME</div>
+                                        <div style="font-size: 12px; color: #666;">欢迎邮件</div>
+                                    </div>
+                                </td>
+                                <td><span class="channel-tag channel-email">邮件</span></td>
+                                <td>
+                                    <div>
+                                        <div>个人: user789</div>
+                                        <div style="font-size: 12px; color: #666;">王五</div>
+                                    </div>
+                                </td>
+                                <td><span class="status-tag status-pending">发送中</span></td>
+                                <td>2024-01-15 11:20:45</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-link btn-sm">查看</button>
+                                        <button class="btn btn-link btn-sm" disabled>重发</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- 分页 -->
+                    <div class="pagination">
+                        <span>共 1,234 条记录，第 1/124 页</span>
+                        <button class="btn btn-default btn-sm">上一页</button>
+                        <button class="btn btn-primary btn-sm">1</button>
+                        <button class="btn btn-default btn-sm">2</button>
+                        <button class="btn btn-default btn-sm">3</button>
+                        <button class="btn btn-default btn-sm">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知详情模态框 -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>通知详情</h3>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">请求ID</div>
+                        <div class="detail-value">user_welcome_001</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">模板代码</div>
+                        <div class="detail-value">USER_REGISTER_WELCOME</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">模板名称</div>
+                        <div class="detail-value">用户注册欢迎</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">通知渠道</div>
+                        <div class="detail-value">站内信</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">接收者类型</div>
+                        <div class="detail-value">个人</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">接收者ID</div>
+                        <div class="detail-value">user123</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">发送状态</div>
+                        <div class="detail-value"><span class="status-tag status-success">发送成功</span></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">发送时间</div>
+                        <div class="detail-value">2024-01-15 10:30:15</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">模板参数</div>
+                    <div class="detail-content">{"userName": "张三"}</div>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">渲染后主题</div>
+                    <div class="detail-content">欢迎加入我们！</div>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">渲染后内容</div>
+                    <div class="detail-content">亲爱的 张三，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。</div>
+                </div>
+                
+                <div>
+                    <div class="detail-label">接收者信息</div>
+                    <div class="detail-content">{"userId": "user123", "userName": "张三"}</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning">重发通知</button>
+                <button class="btn btn-default">关闭</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
