@@ -4,6 +4,9 @@ import com.enterprise.notification.admin.dto.*;
 import com.enterprise.notification.admin.dto.query.GroupMemberQueryRequest;
 import com.enterprise.notification.admin.dto.query.RecipientGroupQueryRequest;
 import com.enterprise.notification.admin.service.RecipientGroupAdminService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,7 @@ import javax.validation.constraints.Min;
 @RestController
 @RequestMapping("/api/admin/recipient-groups")
 @Validated
+@Tag(name = "收件人组管理", description = "收件人组和组成员的增删改查功能")
 public class RecipientGroupAdminController {
 
     @Autowired
@@ -31,8 +35,10 @@ public class RecipientGroupAdminController {
     /**
      * 分页查询收件人组
      */
+    @Operation(summary = "分页查询收件人组", description = "支持按组代码、名称等条件分页查询收件人组")
     @PostMapping("/query")
-    public ResponseEntity<PageResult<RecipientGroupDto>> getRecipientGroups(@Valid @RequestBody RecipientGroupQueryRequest request) {
+    public ResponseEntity<PageResult<RecipientGroupDto>> getRecipientGroups(
+            @Parameter(description = "查询条件") @Valid @RequestBody RecipientGroupQueryRequest request) {
 
         log.info("查询收件人组列表: current={}, size={}, groupCode={}, groupName={}, isEnabled={}",
                 request.getCurrent(), request.getSize(), request.getGroupCode(),

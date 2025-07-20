@@ -5,6 +5,9 @@ import com.enterprise.notification.admin.dto.query.NotificationRecordQueryReques
 import com.enterprise.notification.admin.dto.query.NotificationStatisticsQueryRequest;
 import com.enterprise.notification.admin.service.NotificationAuditService;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -26,6 +29,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/admin/notifications")
 @Validated
+@Tag(name = "通知审计监控", description = "通知记录查询、统计分析和重发功能")
 public class NotificationAuditController {
 
     @Autowired

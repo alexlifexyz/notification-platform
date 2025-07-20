@@ -3,6 +3,9 @@ package com.enterprise.notification.controller;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
 import com.enterprise.notification.service.NotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @Validated
+@Tag(name = "通知服务", description = "提供统一的消息通知发送服务")
 public class NotificationController {
 
     @Autowired
@@ -32,9 +36,10 @@ public class NotificationController {
      * @param request 发送请求
      * @return 发送响应
      */
+    @Operation(summary = "发送通知", description = "根据模板代码和接收者信息发送通知，支持个人通知和组通知")
     @PostMapping("/send")
     public ResponseEntity<SendNotificationResponse> sendNotification(
-            @Valid @RequestBody SendNotificationRequest request) {
+            @Parameter(description = "通知发送请求") @Valid @RequestBody SendNotificationRequest request) {
         
         log.info("接收到通知发送请求: requestId={}, templateCode={}, recipientType={}, recipientId={}", 
                 request.getRequestId(), 
@@ -66,6 +71,7 @@ public class NotificationController {
     /**
      * 健康检查
      */
+    @Operation(summary = "健康检查", description = "检查通知服务是否正常运行")
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Notification Service is running");

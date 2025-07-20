@@ -97,9 +97,21 @@ private NotificationClient notificationClient;
 // 发送个人通知
 notificationClient.sendToUser(requestId, templateCode, userId, params);
 
-// 发送组通知  
+// 发送组通知
 notificationClient.sendToGroup(requestId, templateCode, groupCode, params);
 ```
+
+### 5. API文档访问
+
+**Swagger UI 地址**:
+- 核心服务: http://localhost:8080/notification-service/swagger-ui.html
+- 管理后台: http://localhost:8081/notification-admin/swagger-ui.html
+
+**功能特性**:
+- 📖 完整的API文档
+- 🧪 在线测试功能
+- 🔍 搜索和过滤
+- 📋 请求/响应示例
 
 ## 📊 功能模块
 
@@ -216,7 +228,9 @@ notificationClient.sendToGroup(
 ## 📖 文档导航
 
 - **[项目概述](./docs/01-overview.md)** - 了解项目背景和核心特性
-- **[管理后台API](./docs/08-admin-api.md)** - 完整的管理API文档
+- **[快速开始](./docs/02-quick-start.md)** - 5分钟快速部署指南
+- **[API参考](./docs/03-api-reference.md)** - 完整的API文档
+- **[Swagger文档](./docs/06-swagger-api.md)** - 在线API文档和测试 🆕
 - **[使用示例](./examples/)** - 丰富的业务场景示例
 - **[架构设计](./PROJECT-STRUCTURE.md)** - 详细的架构说明
 - **[升级总结](./UPGRADE-SUMMARY.md)** - 升级过程和成果
