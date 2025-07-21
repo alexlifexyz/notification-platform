@@ -1,7 +1,7 @@
 package com.enterprise.notification.admin.controller;
 
-import com.enterprise.notification.admin.dto.*;
-import com.enterprise.notification.admin.dto.query.TemplateQueryRequest;
+import com.enterprise.notification.admin.dto.common.PageResult;
+import com.enterprise.notification.admin.dto.template.*;
 import com.enterprise.notification.admin.service.TemplateAdminService;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 
 /**
  * 模板管理控制器

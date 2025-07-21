@@ -1,4 +1,4 @@
-package com.enterprise.notification.admin.dto.query;
+package com.enterprise.notification.admin.dto.notification;
 
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;

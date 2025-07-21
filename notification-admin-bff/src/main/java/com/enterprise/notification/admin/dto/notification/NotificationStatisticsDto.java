@@ -1,10 +1,9 @@
-package com.enterprise.notification.admin.dto;
+package com.enterprise.notification.admin.dto.notification;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 通知统计DTO

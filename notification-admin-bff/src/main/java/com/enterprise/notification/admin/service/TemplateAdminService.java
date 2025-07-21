@@ -3,7 +3,11 @@ package com.enterprise.notification.admin.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.enterprise.notification.admin.dto.*;
+import com.enterprise.notification.admin.dto.common.PageResult;
+import com.enterprise.notification.admin.dto.template.TemplateCreateRequest;
+import com.enterprise.notification.admin.dto.template.TemplateDto;
+import com.enterprise.notification.admin.dto.template.TemplateTestSendRequest;
+import com.enterprise.notification.admin.dto.template.TemplateUpdateRequest;
 import com.enterprise.notification.admin.entity.NotificationChannel;
 import com.enterprise.notification.admin.entity.NotificationTemplate;
 import com.enterprise.notification.admin.mapper.NotificationChannelMapper;
@@ -46,8 +50,8 @@ public class TemplateAdminService {
     /**
      * 分页查询模板列表
      */
-    public PageResult<TemplateDto> getTemplates(long current, long size, String templateCode, 
-                                               String templateName, String channelCode, Boolean isEnabled) {
+    public PageResult<TemplateDto> getTemplates(long current, long size, String templateCode,
+                                                String templateName, String channelCode, Boolean isEnabled) {
         Page<NotificationTemplate> page = new Page<>(current, size);
         
         LambdaQueryWrapper<NotificationTemplate> wrapper = new LambdaQueryWrapper<>();

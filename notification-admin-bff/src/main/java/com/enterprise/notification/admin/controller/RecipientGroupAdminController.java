@@ -1,8 +1,7 @@
 package com.enterprise.notification.admin.controller;
 
-import com.enterprise.notification.admin.dto.*;
-import com.enterprise.notification.admin.dto.query.GroupMemberQueryRequest;
-import com.enterprise.notification.admin.dto.query.RecipientGroupQueryRequest;
+import com.enterprise.notification.admin.dto.common.PageResult;
+import com.enterprise.notification.admin.dto.group.*;
 import com.enterprise.notification.admin.service.RecipientGroupAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,7 +13,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 
 /**
  * 收件人组管理控制器

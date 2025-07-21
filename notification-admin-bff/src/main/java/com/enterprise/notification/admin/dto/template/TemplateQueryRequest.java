@@ -1,17 +1,17 @@
-package com.enterprise.notification.admin.dto.query;
+package com.enterprise.notification.admin.dto.template;
 
 import lombok.Data;
 
 import javax.validation.constraints.Min;
 
 /**
- * 收件人组查询请求DTO
+ * 模板查询请求DTO
  *
  * @author Enterprise Team
  * @since 1.0.0
  */
 @Data
-public class RecipientGroupQueryRequest {
+public class TemplateQueryRequest {
 
     /**
      * 当前页码
@@ -26,14 +26,19 @@ public class RecipientGroupQueryRequest {
     private Long size = 10L;
 
     /**
-     * 组代码（模糊查询）
+     * 模板代码（模糊查询）
      */
-    private String groupCode;
+    private String templateCode;
 
     /**
-     * 组名称（模糊查询）
+     * 模板名称（模糊查询）
      */
-    private String groupName;
+    private String templateName;
+
+    /**
+     * 渠道代码
+     */
+    private String channelCode;
 
     /**
      * 是否启用

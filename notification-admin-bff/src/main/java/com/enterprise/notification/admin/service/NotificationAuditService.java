@@ -3,7 +3,10 @@ package com.enterprise.notification.admin.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.enterprise.notification.admin.dto.*;
+import com.enterprise.notification.admin.dto.common.PageResult;
+import com.enterprise.notification.admin.dto.notification.NotificationRecordDto;
+import com.enterprise.notification.admin.dto.notification.NotificationResendRequest;
+import com.enterprise.notification.admin.dto.notification.NotificationStatisticsDto;
 import com.enterprise.notification.admin.entity.Notification;
 import com.enterprise.notification.admin.entity.NotificationChannel;
 import com.enterprise.notification.admin.entity.NotificationTemplate;
@@ -57,9 +60,9 @@ public class NotificationAuditService {
      * 分页查询通知记录
      */
     public PageResult<NotificationRecordDto> getNotificationRecords(long current, long size,
-                                                                   String requestId, String templateCode, 
-                                                                   String recipientId, String status,
-                                                                   LocalDateTime startTime, LocalDateTime endTime) {
+                                                                    String requestId, String templateCode,
+                                                                    String recipientId, String status,
+                                                                    LocalDateTime startTime, LocalDateTime endTime) {
         Page<Notification> page = new Page<>(current, size);
         
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
@@ -167,8 +170,8 @@ public class NotificationAuditService {
     /**
      * 获取通知统计
      */
-    public NotificationStatisticsDto getNotificationStatistics(LocalDateTime startTime, LocalDateTime endTime, 
-                                                              String groupBy) {
+    public NotificationStatisticsDto getNotificationStatistics(LocalDateTime startTime, LocalDateTime endTime,
+                                                               String groupBy) {
         log.info("获取通知统计: startTime={}, endTime={}, groupBy={}", startTime, endTime, groupBy);
 
         NotificationStatisticsDto statistics = new NotificationStatisticsDto();

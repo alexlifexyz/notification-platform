@@ -9,10 +9,10 @@
 - **功能**: 通知发送、健康检查
 - **端点数**: 2个
 
-### 管理后台服务 (notification-admin-bff)  
+### 管理后台服务 (notification-admin-bff)
 - **基础URL**: `http://localhost:8081/notification-admin`
-- **功能**: 模板管理、组管理、审计监控
-- **端点数**: 17个
+- **功能**: 模板管理、组管理、审计监控、收件人管理、站内信管理、渠道管理
+- **端点数**: 35个
 
 ## 🚀 核心通知服务API
 
@@ -268,6 +268,253 @@
 
 **接口**: `DELETE /api/admin/recipient-groups/{groupCode}/members/{userId}`
 
+### 收件人管理 (6个端点)
+
+#### 1. 查询收件人列表
+
+**接口**: `POST /api/admin/recipients/query`
+
+**请求体**:
+```json
+{
+  "current": 1,
+  "size": 10,
+  "userId": "user",
+  "userName": "张",
+  "phone": "138",
+  "email": "@company.com",
+  "groupCode": "DEV_TEAM",
+  "isEnabled": true
+}
+```
+
+**响应**:
+```json
+{
+  "current": 1,
+  "size": 10,
+  "total": 100,
+  "pages": 10,
+  "records": [
+    {
+      "id": 1,
+      "userId": "dev001",
+      "userName": "张三 - 开发工程师",
+      "phone": "13800138001",
+      "email": "zhangsan@company.com",
+      "imAccount": "zhangsan",
+      "preferredChannels": ["IN_APP", "EMAIL", "SMS"],
+      "groupCode": "DEV_TEAM",
+      "groupName": "开发团队",
+      "isEnabled": true,
+      "createdAt": "2024-07-18T10:00:00",
+      "updatedAt": "2024-07-18T10:00:00"
+    }
+  ]
+}
+```
+
+#### 2. 获取收件人详情
+
+**接口**: `GET /api/admin/recipients/{userId}`
+
+#### 3. 创建收件人
+
+**接口**: `POST /api/admin/recipients`
+
+**请求体**:
+```json
+{
+  "userId": "new_user_001",
+  "userName": "新用户",
+  "phone": "13900139001",
+  "email": "newuser@company.com",
+  "imAccount": "newuser",
+  "preferredChannels": ["IN_APP", "EMAIL"],
+  "groupCode": "DEV_TEAM",
+  "isEnabled": true
+}
+```
+
+#### 4. 更新收件人
+
+**接口**: `PUT /api/admin/recipients/{userId}`
+
+#### 5. 删除收件人
+
+**接口**: `DELETE /api/admin/recipients/{userId}`
+
+#### 6. 批量导入收件人
+
+**接口**: `POST /api/admin/recipients/batch-import`
+
+**请求体**:
+```json
+{
+  "groupCode": "DEV_TEAM",
+  "recipients": [
+    {
+      "userId": "batch_001",
+      "userName": "批量用户1",
+      "phone": "13900139001",
+      "email": "batch1@company.com",
+      "preferredChannels": ["IN_APP", "EMAIL"]
+    }
+  ]
+}
+```
+
+### 站内信管理 (7个端点)
+
+#### 1. 查询站内信列表
+
+**接口**: `POST /api/admin/in-app-messages/query`
+
+**请求体**:
+```json
+{
+  "current": 1,
+  "size": 20,
+  "userId": "user123",
+  "subject": "订单",
+  "isRead": false,
+  "startTime": "2024-07-18T00:00:00",
+  "endTime": "2024-07-18T23:59:59"
+}
+```
+
+**响应**:
+```json
+{
+  "current": 1,
+  "size": 20,
+  "total": 100,
+  "pages": 5,
+  "records": [
+    {
+      "id": 1,
+      "notificationId": 12345,
+      "userId": "user123",
+      "subject": "您的订单已发货",
+      "content": "您的订单 ORD20240718001 已发货，快递单号：SF1234567890",
+      "isRead": false,
+      "readAt": null,
+      "createdAt": "2024-07-18T10:30:00",
+      "updatedAt": "2024-07-18T10:30:00"
+    }
+  ]
+}
+```
+
+#### 2. 获取站内信详情
+
+**接口**: `GET /api/admin/in-app-messages/{id}`
+
+#### 3. 标记已读
+
+**接口**: `PUT /api/admin/in-app-messages/{id}/mark-read`
+
+#### 4. 标记未读
+
+**接口**: `PUT /api/admin/in-app-messages/{id}/mark-unread`
+
+#### 5. 删除站内信
+
+**接口**: `DELETE /api/admin/in-app-messages/{id}`
+
+#### 6. 批量操作
+
+**接口**: `POST /api/admin/in-app-messages/batch-operation`
+
+**请求体**:
+```json
+{
+  "operation": "MARK_READ",
+  "messageIds": [1, 2, 3, 4, 5]
+}
+```
+
+#### 7. 获取站内信统计
+
+**接口**: `GET /api/admin/in-app-messages/statistics`
+
+**查询参数**: `userId`, `startTime`, `endTime`
+
+**响应**:
+```json
+{
+  "totalCount": 100,
+  "unreadCount": 25,
+  "readCount": 75,
+  "readRate": 75.0,
+  "dailyStatistics": [
+    {
+      "date": "2024-07-18",
+      "totalCount": 10,
+      "unreadCount": 3,
+      "readCount": 7
+    }
+  ]
+}
+```
+
+### 渠道管理 (6个端点)
+
+#### 1. 查询渠道列表
+
+**接口**: `GET /api/admin/channels`
+
+**响应**:
+```json
+[
+  {
+    "id": 1,
+    "channelCode": "IN_APP",
+    "channelName": "站内信",
+    "isEnabled": true,
+    "createdAt": "2024-07-18T10:00:00",
+    "updatedAt": "2024-07-18T10:00:00"
+  },
+  {
+    "id": 2,
+    "channelCode": "SMS",
+    "channelName": "短信",
+    "isEnabled": true,
+    "createdAt": "2024-07-18T10:00:00",
+    "updatedAt": "2024-07-18T10:00:00"
+  }
+]
+```
+
+#### 2. 获取渠道详情
+
+**接口**: `GET /api/admin/channels/{channelCode}`
+
+#### 3. 创建渠道
+
+**接口**: `POST /api/admin/channels`
+
+**请求体**:
+```json
+{
+  "channelCode": "WECHAT",
+  "channelName": "微信通知",
+  "isEnabled": true
+}
+```
+
+#### 4. 更新渠道
+
+**接口**: `PUT /api/admin/channels/{channelCode}`
+
+#### 5. 启用/禁用渠道
+
+**接口**: `PUT /api/admin/channels/{channelCode}/toggle-status`
+
+#### 6. 删除渠道
+
+**接口**: `DELETE /api/admin/channels/{channelCode}`
+
 ### 审计监控 (4个端点)
 
 #### 1. 查询通知记录
@@ -426,6 +673,55 @@ curl -X POST http://localhost:8081/notification-admin/api/admin/recipient-groups
     "description": "产品开发团队",
     "isEnabled": true
   }'
+
+# 查询收件人
+curl -X POST http://localhost:8081/notification-admin/api/admin/recipients/query \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current": 1,
+    "size": 10,
+    "groupCode": "DEV_TEAM"
+  }'
+
+# 创建收件人
+curl -X POST http://localhost:8081/notification-admin/api/admin/recipients \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "dev001",
+    "userName": "张三 - 开发工程师",
+    "phone": "13800138001",
+    "email": "zhangsan@company.com",
+    "groupCode": "DEV_TEAM",
+    "preferredChannels": ["IN_APP", "EMAIL"],
+    "isEnabled": true
+  }'
+
+# 查询站内信
+curl -X POST http://localhost:8081/notification-admin/api/admin/in-app-messages/query \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current": 1,
+    "size": 20,
+    "userId": "user123",
+    "isRead": false
+  }'
+
+# 标记站内信已读
+curl -X PUT http://localhost:8081/notification-admin/api/admin/in-app-messages/1/mark-read \
+  -H "Content-Type: application/json"
+
+# 获取渠道列表
+curl -X GET http://localhost:8081/notification-admin/api/admin/channels \
+  -H "Content-Type: application/json"
+
+# 创建渠道
+curl -X POST http://localhost:8081/notification-admin/api/admin/channels \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channelCode": "WECHAT",
+    "channelName": "微信通知",
+    "isEnabled": true
+  }'
 ```
 
 ### JavaScript示例
@@ -451,6 +747,41 @@ const queryTemplates = async (query) => {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(query)
+  });
+  return response.json();
+};
+
+// 查询收件人
+const queryRecipients = async (query) => {
+  const response = await fetch('http://localhost:8081/notification-admin/api/admin/recipients/query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(query)
+  });
+  return response.json();
+};
+
+// 查询站内信
+const queryInAppMessages = async (query) => {
+  const response = await fetch('http://localhost:8081/notification-admin/api/admin/in-app-messages/query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(query)
+  });
+  return response.json();
+};
+
+// 获取渠道列表
+const getChannels = async () => {
+  const response = await fetch('http://localhost:8081/notification-admin/api/admin/channels', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
   return response.json();
 };
