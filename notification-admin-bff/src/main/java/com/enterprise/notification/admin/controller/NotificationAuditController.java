@@ -1,23 +1,17 @@
 package com.enterprise.notification.admin.controller;
 
-import com.enterprise.notification.admin.dto.*;
-import com.enterprise.notification.admin.dto.query.NotificationRecordQueryRequest;
-import com.enterprise.notification.admin.dto.query.NotificationStatisticsQueryRequest;
+import com.enterprise.notification.admin.dto.common.PageResult;
+import com.enterprise.notification.admin.dto.notification.*;
 import com.enterprise.notification.admin.service.NotificationAuditService;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import java.time.LocalDateTime;
 
 /**
  * 通知审计监控控制器

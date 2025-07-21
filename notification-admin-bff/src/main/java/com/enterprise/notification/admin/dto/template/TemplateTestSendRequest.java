@@ -1,4 +1,4 @@
-package com.enterprise.notification.admin.dto;
+package com.enterprise.notification.admin.dto.template;
 
 import lombok.Data;
 

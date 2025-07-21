@@ -3,7 +3,8 @@ package com.enterprise.notification.admin.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.enterprise.notification.admin.dto.*;
+import com.enterprise.notification.admin.dto.common.PageResult;
+import com.enterprise.notification.admin.dto.group.*;
 import com.enterprise.notification.admin.entity.RecipientGroup;
 import com.enterprise.notification.admin.entity.RecipientGroupMember;
 import com.enterprise.notification.admin.mapper.RecipientGroupMapper;
@@ -45,8 +46,8 @@ public class RecipientGroupAdminService {
     /**
      * 分页查询收件人组
      */
-    public PageResult<RecipientGroupDto> getRecipientGroups(long current, long size, 
-                                                           String groupCode, String groupName, Boolean isEnabled) {
+    public PageResult<RecipientGroupDto> getRecipientGroups(long current, long size,
+                                                            String groupCode, String groupName, Boolean isEnabled) {
         Page<RecipientGroup> page = new Page<>(current, size);
         
         LambdaQueryWrapper<RecipientGroup> wrapper = new LambdaQueryWrapper<>();

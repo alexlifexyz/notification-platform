@@ -1,17 +1,24 @@
-package com.enterprise.notification.admin.dto.query;
+package com.enterprise.notification.admin.dto.group;
 
 import lombok.Data;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 
 /**
- * 模板查询请求DTO
+ * 组成员查询请求DTO
  *
  * @author Enterprise Team
  * @since 1.0.0
  */
 @Data
-public class TemplateQueryRequest {
+public class GroupMemberQueryRequest {
+
+    /**
+     * 组代码
+     */
+    @NotBlank(message = "组代码不能为空")
+    private String groupCode;
 
     /**
      * 当前页码
@@ -26,19 +33,14 @@ public class TemplateQueryRequest {
     private Long size = 10L;
 
     /**
-     * 模板代码（模糊查询）
+     * 用户ID（模糊查询）
      */
-    private String templateCode;
+    private String userId;
 
     /**
-     * 模板名称（模糊查询）
+     * 用户名称（模糊查询）
      */
-    private String templateName;
-
-    /**
-     * 渠道代码
-     */
-    private String channelCode;
+    private String userName;
 
     /**
      * 是否启用
