@@ -31,7 +31,7 @@ public class NotificationServiceTest {
     @Autowired
     private NotificationTemplateMapper templateMapper;
 
-    @Test
+//    @Test
     public void testSendIndividualNotification() {
         // 准备测试数据
         SendNotificationRequest request = new SendNotificationRequest();

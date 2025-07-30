@@ -32,6 +32,11 @@ public class NotificationProperties {
      */
     private Retry retry = new Retry();
 
+    /**
+     * 简单邮件配置
+     */
+    private SimpleEmail email = new SimpleEmail();
+
     @Data
     public static class Providers {
         /**
@@ -166,5 +171,23 @@ public class NotificationProperties {
          * 重试延迟（秒）
          */
         private int delaySeconds = 5;
+    }
+
+    @Data
+    public static class SimpleEmail {
+        /**
+         * 是否启用邮件发送
+         */
+        private boolean enabled = true;
+
+        /**
+         * 发件人邮箱
+         */
+        private String from = "noreply@yourcompany.com";
+
+        /**
+         * 发件人名称
+         */
+        private String fromName = "Notification Platform";
     }
 }

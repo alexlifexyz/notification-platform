@@ -1,6 +1,8 @@
 package com.enterprise.notification.sender;
 
 import com.enterprise.notification.entity.NotificationTemplate;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
@@ -38,7 +40,10 @@ public interface NotificationSender {
     /**
      * 发送结果
      */
+    @Getter
+    @Setter
     class SendResult {
+        // Getters and Setters
         private boolean success;
         private String providerCode;
         private String errorMessage;
@@ -54,44 +59,13 @@ public interface NotificationSender {
             this.providerCode = providerCode;
             this.errorMessage = errorMessage;
         }
-
-        // Getters and Setters
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public void setSuccess(boolean success) {
-            this.success = success;
-        }
-
-        public String getProviderCode() {
-            return providerCode;
-        }
-
-        public void setProviderCode(String providerCode) {
-            this.providerCode = providerCode;
-        }
-
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-
-        public void setErrorMessage(String errorMessage) {
-            this.errorMessage = errorMessage;
-        }
-
-        public Map<String, Object> getMetadata() {
-            return metadata;
-        }
-
-        public void setMetadata(Map<String, Object> metadata) {
-            this.metadata = metadata;
-        }
     }
 
     /**
      * 接收者信息
      */
+    @Setter
+    @Getter
     class RecipientInfo {
         private String userId;
         private String userName;
@@ -109,45 +83,5 @@ public interface NotificationSender {
             this.imAccount = imAccount;
         }
 
-        // Getters and Setters
-        public String getUserId() {
-            return userId;
-        }
-
-        public void setUserId(String userId) {
-            this.userId = userId;
-        }
-
-        public String getUserName() {
-            return userName;
-        }
-
-        public void setUserName(String userName) {
-            this.userName = userName;
-        }
-
-        public String getPhone() {
-            return phone;
-        }
-
-        public void setPhone(String phone) {
-            this.phone = phone;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getImAccount() {
-            return imAccount;
-        }
-
-        public void setImAccount(String imAccount) {
-            this.imAccount = imAccount;
-        }
     }
 }
