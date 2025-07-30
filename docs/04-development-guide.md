@@ -579,6 +579,23 @@ class NotificationIntegrationTest {
 }
 ```
 
+## 🔗 BFF架构说明
+
+### 管理后台BFF服务
+管理后台采用BFF (Backend for Frontend) 架构：
+
+- **服务地址**: http://localhost:8081/notification-admin
+- **API前缀**: /api/admin
+- **数据库**: 直接连接notification-service相同的数据库
+
+### 主要API模块
+1. **模板管理**: `/api/admin/templates` - 模板CRUD和测试发送
+2. **收件人组管理**: `/api/admin/recipient-groups` - 收件人组管理
+3. **发送记录**: `/api/admin/send-records` - 发送历史查询
+4. **统计分析**: `/api/admin/statistics` - 发送统计和分析
+
+详细的BFF API文档请查看: http://localhost:8081/notification-admin/swagger-ui.html
+
 ## 🎯 最佳实践总结
 
 1. **异步处理**: 使用异步方式发送通知，避免阻塞主业务流程

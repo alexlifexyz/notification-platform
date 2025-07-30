@@ -2,6 +2,20 @@
 
 本文档提供通知平台所有API接口的完整参考，包括核心通知服务和管理后台的所有端点。
 
+## 📖 Swagger在线文档
+
+项目已集成SpringDoc OpenAPI 3，提供完整的在线API文档：
+
+### 访问地址
+- **核心服务**: http://localhost:8080/notification-service/swagger-ui.html
+- **管理后台**: http://localhost:8081/notification-admin/swagger-ui.html
+
+### 功能特性
+- 自动生成API文档
+- 在线接口测试
+- 参数验证和示例
+- 响应格式说明
+
 ## 📋 API概览
 
 ### 核心通知服务 (notification-service)
