@@ -19,7 +19,7 @@ import java.util.Locale;
  * @author Enterprise Team
  * @since 1.0.0
  */
-@Configuration
+//@Configuration
 public class I18nConfig implements WebMvcConfigurer {
 
     /**

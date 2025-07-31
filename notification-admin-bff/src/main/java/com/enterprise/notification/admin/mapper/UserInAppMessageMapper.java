@@ -22,25 +22,25 @@ public interface UserInAppMessageMapper extends BaseMapper<UserInAppMessage> {
     /**
      * 获取站内信统计信息
      */
-    @Select({
-        "<script>",
-        "SELECT ",
-        "  COUNT(*) as totalCount,",
-        "  SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unreadCount,",
-        "  SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as readCount",
-        "FROM user_in_app_messages",
-        "WHERE 1=1",
-        "<if test='userId != null and userId != \"\"'>",
-        "  AND user_id = #{userId}",
-        "</if>",
-        "<if test='startTime != null'>",
-        "  AND created_at >= #{startTime}",
-        "</if>",
-        "<if test='endTime != null'>",
-        "  AND created_at <= #{endTime}",
-        "</if>",
-        "</script>"
-    })
+//    @Select({
+//        "<script>",
+//        "SELECT ",
+//        "  COUNT(*) as totalCount,",
+//        "  SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unreadCount,",
+//        "  SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as readCount",
+//        "FROM user_in_app_messages",
+//        "WHERE 1=1",
+//        "<if test='userId != null and userId != \"\"'>",
+//        "  AND user_id = #{userId}",
+//        "</if>",
+//        "<if test='startTime != null'>",
+//        "  AND created_at >= #{startTime}",
+//        "</if>",
+//        "<if test='endTime != null'>",
+//        "  AND created_at <= #{endTime}",
+//        "</if>",
+//        "</script>"
+//    })
     Map<String, Object> getStatistics(@Param("userId") String userId,
                                      @Param("startTime") LocalDateTime startTime,
                                      @Param("endTime") LocalDateTime endTime);
@@ -48,28 +48,28 @@ public interface UserInAppMessageMapper extends BaseMapper<UserInAppMessage> {
     /**
      * 获取每日统计信息
      */
-    @Select({
-        "<script>",
-        "SELECT ",
-        "  DATE(created_at) as date,",
-        "  COUNT(*) as totalCount,",
-        "  SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unreadCount,",
-        "  SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as readCount",
-        "FROM user_in_app_messages",
-        "WHERE 1=1",
-        "<if test='userId != null and userId != \"\"'>",
-        "  AND user_id = #{userId}",
-        "</if>",
-        "<if test='startTime != null'>",
-        "  AND created_at >= #{startTime}",
-        "</if>",
-        "<if test='endTime != null'>",
-        "  AND created_at <= #{endTime}",
-        "</if>",
-        "GROUP BY DATE(created_at)",
-        "ORDER BY DATE(created_at)",
-        "</script>"
-    })
+//    @Select({
+//        "<script>",
+//        "SELECT ",
+//        "  DATE(created_at) as date,",
+//        "  COUNT(*) as totalCount,",
+//        "  SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unreadCount,",
+//        "  SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as readCount",
+//        "FROM user_in_app_messages",
+//        "WHERE 1=1",
+//        "<if test='userId != null and userId != \"\"'>",
+//        "  AND user_id = #{userId}",
+//        "</if>",
+//        "<if test='startTime != null'>",
+//        "  AND created_at >= #{startTime}",
+//        "</if>",
+//        "<if test='endTime != null'>",
+//        "  AND created_at <= #{endTime}",
+//        "</if>",
+//        "GROUP BY DATE(created_at)",
+//        "ORDER BY DATE(created_at)",
+//        "</script>"
+//    })
     List<Map<String, Object>> getDailyStatistics(@Param("userId") String userId,
                                                  @Param("startTime") LocalDateTime startTime,
                                                  @Param("endTime") LocalDateTime endTime);

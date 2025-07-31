@@ -4,17 +4,32 @@
 
 ## 📖 Swagger在线文档
 
-项目已集成SpringDoc OpenAPI 3，提供完整的在线API文档：
+项目已完整集成SpringDoc OpenAPI 3，提供功能丰富的在线API文档：
 
-### 访问地址
+### 🌐 访问地址
 - **核心服务**: http://localhost:8080/notification-service/swagger-ui.html
 - **管理后台**: http://localhost:8081/notification-admin/swagger-ui.html
+- **API JSON**:
+  - 核心服务: http://localhost:8080/notification-service/api-docs
+  - 管理后台: http://localhost:8081/notification-admin/api-docs
 
-### 功能特性
-- 自动生成API文档
-- 在线接口测试
-- 参数验证和示例
-- 响应格式说明
+### ✨ 功能特性
+- 🚀 **自动生成文档**: 基于代码注解自动生成完整API文档
+- 🧪 **在线接口测试**: 直接在浏览器中测试所有API接口
+- 📝 **参数验证**: 完整的参数验证规则和示例展示
+- 📊 **响应格式**: 详细的响应格式说明和错误处理
+- 🔍 **搜索过滤**: 支持API搜索和标签过滤
+- 📋 **模型展示**: 自动展示请求/响应数据模型
+
+### 🚀 快速开始
+```bash
+# 启动服务
+./start-services-for-swagger-test.sh
+
+# 或手动启动
+cd notification-service && mvn spring-boot:run
+cd notification-admin-bff && mvn spring-boot:run
+```
 
 ## 📋 API概览
 
