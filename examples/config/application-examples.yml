@@ -4,7 +4,16 @@
 spring:
   application:
     name: business-service-example
-  
+
+  # Nacos服务发现配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
+        namespace: # 可选，用于环境隔离
+        group: DEFAULT_GROUP # 可选，用于分组
+
   # 数据库配置（业务服务自己的数据库）
   datasource:
     url: jdbc:mysql://localhost:3306/business_service?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
@@ -21,9 +30,9 @@ notification:
   client:
     # 是否启用通知客户端
     enabled: true
-    
-    # 通知服务基础URL
-    base-url: http://localhost:8080/notification-service
+
+    # 通知服务基础URL - 使用服务名，通过Nacos服务发现调用
+    base-url: http://notification-service/notification-service
     
     # 连接超时时间（毫秒）
     connect-timeout: 5000
@@ -170,7 +179,7 @@ spring:
 
 notification:
   client:
-    base-url: http://localhost:8080/notification-service
+    base-url: http://notification-service/notification-service
     connect-timeout: 10000
     read-timeout: 60000
 
@@ -187,7 +196,7 @@ spring:
 
 notification:
   client:
-    base-url: http://test-notification-service:8080/notification-service
+    base-url: http://notification-service/notification-service
     max-retries: 1
     retry-interval: 500
 
@@ -205,7 +214,7 @@ spring:
 
 notification:
   client:
-    base-url: http://notification-service:8080/notification-service
+    base-url: http://notification-service/notification-service
     connect-timeout: 3000
     read-timeout: 15000
     max-retries: 5

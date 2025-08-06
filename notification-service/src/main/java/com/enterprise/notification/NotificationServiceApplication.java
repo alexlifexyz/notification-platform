@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * 消息通知微服务启动类
@@ -16,6 +17,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  */
 @Slf4j
 @SpringBootApplication
+@EnableDiscoveryClient
 @MapperScan("com.enterprise.notification.mapper")
 @EnableConfigurationProperties
 public class NotificationServiceApplication implements CommandLineRunner {

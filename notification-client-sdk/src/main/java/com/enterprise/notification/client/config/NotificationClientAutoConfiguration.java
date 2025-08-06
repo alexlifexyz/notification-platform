@@ -3,9 +3,11 @@ package com.enterprise.notification.client.config;
 import com.enterprise.notification.client.NotificationClient;
 import com.enterprise.notification.client.impl.NotificationClientImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -25,22 +27,40 @@ public class NotificationClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnClass(name = "org.springframework.cloud.client.loadbalancer.LoadBalanced")
+    @LoadBalanced
     public RestTemplate notificationRestTemplate(NotificationClientProperties properties) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(properties.getConnectTimeout());
         factory.setReadTimeout(properties.getReadTimeout());
 
         RestTemplate restTemplate = new RestTemplate(factory);
-        
-        log.info("创建通知客户端RestTemplate: connectTimeout={}, readTimeout={}", 
+
+        log.info("创建负载均衡通知客户端RestTemplate: connectTimeout={}, readTimeout={}",
                 properties.getConnectTimeout(), properties.getReadTimeout());
-        
+
         return restTemplate;
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public NotificationClient notificationClient(RestTemplate notificationRestTemplate, 
+    @ConditionalOnClass(name = "org.springframework.cloud.client.loadbalancer.LoadBalanced")
+    public RestTemplate notificationRestTemplateWithoutLoadBalancer(NotificationClientProperties properties) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(properties.getConnectTimeout());
+        factory.setReadTimeout(properties.getReadTimeout());
+
+        RestTemplate restTemplate = new RestTemplate(factory);
+
+        log.info("创建通知客户端RestTemplate: connectTimeout={}, readTimeout={}",
+                properties.getConnectTimeout(), properties.getReadTimeout());
+
+        return restTemplate;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public NotificationClient notificationClient(RestTemplate notificationRestTemplate,
                                                 NotificationClientProperties properties) {
         log.info("创建通知客户端: baseUrl={}", properties.getBaseUrl());
         return new NotificationClientImpl(notificationRestTemplate, properties);

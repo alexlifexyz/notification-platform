@@ -27,9 +27,17 @@
 在`application.properties`中添加配置：
 
 ```properties
+# Spring应用配置
+spring.application.name=your-business-service
+
+# Nacos服务发现配置
+spring.cloud.nacos.discovery.server-addr=127.0.0.1:8848
+spring.cloud.nacos.discovery.enabled=true
+
 # 通知客户端配置
 notification.client.enabled=true
-notification.client.base-url=http://localhost:8080/notification-service
+# 使用服务名调用，通过Nacos服务发现
+notification.client.base-url=http://notification-service/notification-service
 notification.client.connect-timeout=5000
 notification.client.read-timeout=30000
 notification.client.max-retries=3
