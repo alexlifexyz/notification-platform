@@ -153,3 +153,5 @@ jacoco-it.exec
 
 # Cache directories
 .cache/
+
+.idea
