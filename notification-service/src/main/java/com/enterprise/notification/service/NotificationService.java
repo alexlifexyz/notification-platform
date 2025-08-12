@@ -139,13 +139,7 @@ public class NotificationService {
         response.setResults(new ArrayList<>());
 
         try {
-            // 1. 幂等性检查
-            if (isRequestProcessed(request.getRequestId())) {
-                log.info("请求已处理，返回幂等结果: requestId={}", request.getRequestId());
-                return getExistingResponse(request.getRequestId());
-            }
-
-            // 2. 验证渠道是否支持
+            // 1. 验证渠道是否支持
             List<String> unsupportedChannels = new ArrayList<>();
             for (String channelCode : request.getChannelCodes()) {
                 if (!notificationDispatcher.isChannelSupported(channelCode)) {
@@ -158,7 +152,7 @@ public class NotificationService {
                 return response;
             }
 
-            // 3. 根据接收者类型处理
+            // 2. 根据接收者类型处理
             List<NotificationSender.RecipientInfo> recipients = resolveRecipients(
                     convertToSendRequestRecipient(request.getRecipient()));
             if (recipients.isEmpty()) {
@@ -167,9 +161,17 @@ public class NotificationService {
                 return response;
             }
 
-            // 4. 多渠道批量发送
+            // 3. 多渠道批量发送（简化的幂等性检查）
             boolean allSuccess = true;
             for (String channelCode : request.getChannelCodes()) {
+                // 检查该渠道是否已处理过
+                if (isRequestChannelProcessed(request.getRequestId(), channelCode)) {
+                    log.info("渠道请求已处理，跳过: requestId={}, channelCode={}",
+                            request.getRequestId(), channelCode);
+                    continue; // 直接跳过，不返回历史结果
+                }
+
+                // 该渠道未处理过，执行发送
                 for (NotificationSender.RecipientInfo recipient : recipients) {
                     SendNotificationResponse.SendResult result = sendDirectToRecipient(
                             request, channelCode, recipient);
@@ -201,6 +203,16 @@ public class NotificationService {
     private boolean isRequestProcessed(String requestId) {
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Notification::getRequestId, requestId);
+        return notificationMapper.selectCount(wrapper) > 0;
+    }
+
+    /**
+     * 检查特定渠道的请求是否已处理（多渠道幂等性）
+     */
+    private boolean isRequestChannelProcessed(String requestId, String channelCode) {
+        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Notification::getRequestId, requestId)
+               .eq(Notification::getChannelCode, channelCode);
         return notificationMapper.selectCount(wrapper) > 0;
     }
 

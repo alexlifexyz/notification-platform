@@ -68,7 +68,7 @@ CREATE TABLE `notifications` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_request_id` (`request_id`),
+  UNIQUE KEY `uk_request_channel` (`request_id`, `channel_code`),
   KEY `idx_template_code` (`template_code`),
   KEY `idx_channel_code` (`channel_code`),
   KEY `idx_recipient_id` (`recipient_id`),
