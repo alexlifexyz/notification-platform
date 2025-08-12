@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("recipient_group_members")
+@TableName("recipient_group_member")
 public class RecipientGroupMember {
 
     @TableId(value = "id", type = IdType.AUTO)

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("notification_channels")
+@TableName("notification_channel")
 public class NotificationChannel {
 
     @TableId(value = "id", type = IdType.AUTO)

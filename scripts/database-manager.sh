@@ -53,6 +53,7 @@ show_help() {
     echo "  init           初始化数据库（全新安装）"
     echo "  update         更新数据库结构"
     echo "  fix-multi      修复多渠道约束问题"
+    echo "  rename-tables  重命名表（去掉后缀s）"
     echo "  backup         备份数据库"
     echo "  status         检查数据库状态"
     echo ""
@@ -108,7 +109,7 @@ init_database() {
 # 修复多渠道约束
 fix_multi_channel() {
     print_info "修复多渠道约束..."
-    
+
     local fix_script="${DB_SCRIPTS_DIR}/fix_multi_channel_constraint.sql"
     if [[ -f "$fix_script" ]]; then
         print_info "执行修复脚本..."
@@ -116,6 +117,28 @@ fix_multi_channel() {
         print_success "多渠道约束修复完成"
     else
         print_error "修复脚本不存在: $fix_script"
+        return 1
+    fi
+}
+
+# 重命名表（去掉后缀s）
+rename_tables() {
+    print_info "重命名数据库表（去掉后缀s）..."
+    print_warning "此操作将修改表名，请确保已备份数据库！"
+
+    read -p "确认继续？(y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        print_info "操作已取消"
+        return 0
+    fi
+
+    local rename_script="${DB_SCRIPTS_DIR}/rename_tables_remove_s.sql"
+    if [[ -f "$rename_script" ]]; then
+        print_info "执行表重命名脚本..."
+        mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" "$DB_NAME" < "$rename_script"
+        print_success "表重命名完成"
+    else
+        print_error "重命名脚本不存在: $rename_script"
         return 1
     fi
 }
@@ -133,7 +156,7 @@ check_status() {
         print_info "表数量: $((table_count - 1))"
         
         # 检查关键表
-        local tables=("notification_channels" "notification_templates" "notifications" "recipient_groups" "user_in_app_messages")
+        local tables=("notification_channel" "notification_template" "notification" "recipient_group" "user_in_app_message")
         for table in "${tables[@]}"; do
             if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" "$DB_NAME" -e "DESCRIBE $table;" &> /dev/null; then
                 local count=$(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" "$DB_NAME" -e "SELECT COUNT(*) FROM $table;" | tail -n 1)
@@ -145,7 +168,7 @@ check_status() {
         
         # 检查约束
         print_info "检查约束..."
-        mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" "$DB_NAME" -e "SHOW INDEX FROM notifications WHERE Key_name LIKE 'uk_%';"
+        mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" "$DB_NAME" -e "SHOW INDEX FROM notification WHERE Key_name LIKE 'uk_%';"
         
     else
         print_warning "数据库不存在: $DB_NAME"
@@ -214,6 +237,9 @@ case "${ACTION:-}" in
         ;;
     fix-multi)
         fix_multi_channel
+        ;;
+    rename-tables)
+        rename_tables
         ;;
     status)
         check_status

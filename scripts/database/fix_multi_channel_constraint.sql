@@ -4,13 +4,13 @@
 USE notification_service;
 
 -- 删除原有的 request_id 唯一约束
-ALTER TABLE `notifications` DROP INDEX `uk_request_id`;
+ALTER TABLE `notification` DROP INDEX `uk_request_id`;
 
 -- 添加新的组合唯一约束：同一个 request_id 在不同渠道下可以有多条记录
-ALTER TABLE `notifications` ADD UNIQUE KEY `uk_request_channel` (`request_id`, `channel_code`);
+ALTER TABLE `notification` ADD UNIQUE KEY `uk_request_channel` (`request_id`, `channel_code`);
 
 -- 验证约束修改
-SHOW INDEX FROM `notifications` WHERE Key_name LIKE 'uk_%';
+SHOW INDEX FROM `notification` WHERE Key_name LIKE 'uk_%';
 
 -- 说明：
 -- 修改后，同一个 request_id 可以在不同的 channel_code 下创建多条记录

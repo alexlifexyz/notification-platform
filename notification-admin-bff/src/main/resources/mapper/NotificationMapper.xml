@@ -9,7 +9,7 @@
             COUNT(*) as totalCount,
             SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
             SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
-        FROM notifications 
+        FROM notification
         WHERE 1=1
         <if test="startTime != null">
             AND created_at >= #{startTime}
@@ -28,7 +28,7 @@
             COUNT(*) as totalCount,
             SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
             SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
-        FROM notifications 
+        FROM notification 
         WHERE 1=1
         <if test="startTime != null">
             AND created_at >= #{startTime}
@@ -47,7 +47,7 @@
             COUNT(*) as totalCount,
             SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
             SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
-        FROM notifications 
+        FROM notification 
         WHERE 1=1
         <if test="startTime != null">
             AND created_at >= #{startTime}
@@ -66,7 +66,7 @@
             COUNT(*) as totalCount,
             SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
             SUM(CASE WHEN send_status = 'FAILED' THEN 1 ELSE 0 END) as failedCount
-        FROM notifications 
+        FROM notification 
         WHERE 1=1
         <if test="startTime != null">
             AND created_at >= #{startTime}
@@ -88,9 +88,9 @@
             n.recipient_id as recipientId,
             n.error_message as errorMessage,
             n.created_at as createdAt,
-            (SELECT COUNT(*) FROM notifications n2 
+            (SELECT COUNT(*) FROM notification n2 
              WHERE n2.request_id LIKE CONCAT(n.request_id, '_resend_%')) as retryCount
-        FROM notifications n
+        FROM notification n
         WHERE n.send_status = 'FAILED'
         <if test="startTime != null">
             AND n.created_at >= #{startTime}

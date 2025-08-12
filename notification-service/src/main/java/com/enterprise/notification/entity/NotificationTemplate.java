@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("notification_templates")
+@TableName("notification_template")
 public class NotificationTemplate {
 
     @TableId(value = "id", type = IdType.AUTO)

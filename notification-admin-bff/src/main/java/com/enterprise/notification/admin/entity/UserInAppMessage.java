@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("user_in_app_messages")
+@TableName("user_in_app_message")
 public class UserInAppMessage {
 
     @TableId(value = "id", type = IdType.AUTO)

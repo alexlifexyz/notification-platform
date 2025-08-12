@@ -11,10 +11,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 SET time_zone = '+08:00';
 
 -- =====================================================
--- 1. 通知渠道表 (notification_channels)
+-- 1. 通知渠道表 (notification_channel)
 -- =====================================================
-DROP TABLE IF EXISTS `notification_channels`;
-CREATE TABLE `notification_channels` (
+DROP TABLE IF EXISTS `notification_channel`;
+CREATE TABLE `notification_channel` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `channel_code` varchar(50) NOT NULL COMMENT '渠道代码：IN_APP, SMS, EMAIL, IM',
   `channel_name` varchar(100) NOT NULL COMMENT '渠道名称',
@@ -26,10 +26,10 @@ CREATE TABLE `notification_channels` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知渠道表';
 
 -- =====================================================
--- 2. 通知模板表 (notification_templates)
+-- 2. 通知模板表 (notification_template)
 -- =====================================================
-DROP TABLE IF EXISTS `notification_templates`;
-CREATE TABLE `notification_templates` (
+DROP TABLE IF EXISTS `notification_template`;
+CREATE TABLE `notification_template` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `template_code` varchar(100) NOT NULL COMMENT '模板代码',
   `template_name` varchar(200) NOT NULL COMMENT '模板名称',
@@ -47,10 +47,10 @@ CREATE TABLE `notification_templates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知模板表';
 
 -- =====================================================
--- 3. 通知记录表 (notifications)
+-- 3. 通知记录表 (notification)
 -- =====================================================
-DROP TABLE IF EXISTS `notifications`;
-CREATE TABLE `notifications` (
+DROP TABLE IF EXISTS `notification`;
+CREATE TABLE `notification` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `request_id` varchar(100) NOT NULL COMMENT '请求ID，用于幂等性',
   `template_code` varchar(100) NOT NULL COMMENT '使用的模板代码',
@@ -77,10 +77,10 @@ CREATE TABLE `notifications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知记录表（发件箱/审计日志）';
 
 -- =====================================================
--- 4. 用户站内信表 (user_in_app_messages)
+-- 4. 用户站内信表 (user_in_app_message)
 -- =====================================================
-DROP TABLE IF EXISTS `user_in_app_messages`;
-CREATE TABLE `user_in_app_messages` (
+DROP TABLE IF EXISTS `user_in_app_message`;
+CREATE TABLE `user_in_app_message` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `notification_id` bigint(20) DEFAULT NULL COMMENT '关联通知记录ID（逻辑外键）',
   `user_id` varchar(100) NOT NULL COMMENT '用户ID',
@@ -98,10 +98,10 @@ CREATE TABLE `user_in_app_messages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户站内信表（收件箱）';
 
 -- =====================================================
--- 5. 收件人组表 (recipient_groups)
+-- 5. 收件人组表 (recipient_group)
 -- =====================================================
-DROP TABLE IF EXISTS `recipient_groups`;
-CREATE TABLE `recipient_groups` (
+DROP TABLE IF EXISTS `recipient_group`;
+CREATE TABLE `recipient_group` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `group_code` varchar(100) NOT NULL COMMENT '组代码',
   `group_name` varchar(200) NOT NULL COMMENT '组名称',
@@ -115,10 +115,10 @@ CREATE TABLE `recipient_groups` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收件人组表';
 
 -- =====================================================
--- 6. 收件人组成员表 (recipient_group_members)
+-- 6. 收件人组成员表 (recipient_group_member)
 -- =====================================================
-DROP TABLE IF EXISTS `recipient_group_members`;
-CREATE TABLE `recipient_group_members` (
+DROP TABLE IF EXISTS `recipient_group_member`;
+CREATE TABLE `recipient_group_member` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `group_code` varchar(100) NOT NULL COMMENT '组代码',
   `user_id` varchar(100) NOT NULL COMMENT '用户ID',
@@ -142,14 +142,14 @@ CREATE TABLE `recipient_group_members` (
 -- =====================================================
 
 -- 插入通知渠道基础数据
-INSERT INTO `notification_channels` (`channel_code`, `channel_name`, `is_enabled`) VALUES
+INSERT INTO `notification_channel` (`channel_code`, `channel_name`, `is_enabled`) VALUES
 ('IN_APP', '站内信', 1),
 ('SMS', '短信', 1),
 ('EMAIL', '邮件', 1),
 ('IM', '企业IM', 1);
 
 -- 插入示例通知模板
-INSERT INTO `notification_templates` (`template_code`, `template_name`, `channel_code`, `subject`, `content`, `is_enabled`) VALUES
+INSERT INTO `notification_template` (`template_code`, `template_name`, `channel_code`, `subject`, `content`, `is_enabled`) VALUES
 -- 站内信模板
 ('USER_REGISTER_WELCOME', '用户注册欢迎', 'IN_APP', '欢迎加入我们！', '亲爱的 ${userName}，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。', 1),
 ('ORDER_SHIPPED', '订单发货通知', 'IN_APP', '您的订单已发货', '您的订单 ${orderNo} 已发货，快递单号：${trackingNo}，预计 ${estimatedDays} 天内送达。', 1),
@@ -172,7 +172,7 @@ INSERT INTO `notification_templates` (`template_code`, `template_name`, `channel
 ('IM_DEPLOYMENT_NOTICE', 'IM部署通知', 'IM', '【部署通知】${projectName}', '项目：${projectName}\n版本：${version}\n部署时间：${deployTime}\n部署人员：${deployer}\n状态：${status}', 1);
 
 -- 插入示例收件人组
-INSERT INTO `recipient_groups` (`group_code`, `group_name`, `description`, `is_enabled`) VALUES
+INSERT INTO `recipient_group` (`group_code`, `group_name`, `description`, `is_enabled`) VALUES
 ('ADMIN_GROUP', '系统管理员组', '系统管理员组，接收系统重要通知和安全告警', 1),
 ('OPS_TEAM', '运维团队', '运维团队，接收系统运维、部署、监控相关通知', 1),
 ('DEV_TEAM', '开发团队', '开发团队，接收开发、测试、发布相关通知', 1),
@@ -183,7 +183,7 @@ INSERT INTO `recipient_groups` (`group_code`, `group_name`, `description`, `is_e
 ('TEST_GROUP', '测试组', '测试组，用于测试通知功能', 1);
 
 -- 插入示例组成员
-INSERT INTO `recipient_group_members` (`group_code`, `user_id`, `user_name`, `phone`, `email`, `im_account`, `preferred_channels`, `is_enabled`) VALUES
+INSERT INTO `recipient_group_member` (`group_code`, `user_id`, `user_name`, `phone`, `email`, `im_account`, `preferred_channels`, `is_enabled`) VALUES
 -- 系统管理员组
 ('ADMIN_GROUP', 'admin001', '张三 - 系统管理员', '13800138000', 'zhangsan@company.com', 'zhangsan', '["IN_APP","EMAIL","IM"]', 1),
 ('ADMIN_GROUP', 'admin002', '李四 - 安全管理员', '13800138001', 'lisi@company.com', 'lisi', '["IN_APP","EMAIL","SMS","IM"]', 1),
@@ -213,20 +213,20 @@ INSERT INTO `recipient_group_members` (`group_code`, `user_id`, `user_name`, `ph
 ('TEST_GROUP', 'test002', '测试用户2', '13900139002', 'test2@test.com', 'test002', '["IN_APP","EMAIL"]', 1);
 
 -- 插入示例通知记录（用于演示和测试）
-INSERT INTO `notifications` (`request_id`, `template_code`, `channel_code`, `provider_code`, `recipient_type`, `recipient_id`, `recipient_info`, `template_params`, `rendered_subject`, `rendered_content`, `send_status`, `sent_at`, `created_at`) VALUES
+INSERT INTO `notification` (`request_id`, `template_code`, `channel_code`, `provider_code`, `recipient_type`, `recipient_id`, `recipient_info`, `template_params`, `rendered_subject`, `rendered_content`, `send_status`, `sent_at`, `created_at`) VALUES
 ('demo_001', 'USER_REGISTER_WELCOME', 'IN_APP', 'IN_APP_PROVIDER', 'INDIVIDUAL', 'test001', '{"userId":"test001","userName":"测试用户1"}', '{"userName":"测试用户1"}', '欢迎加入我们！', '亲爱的 测试用户1，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。', 'SUCCESS', NOW(), NOW()),
 ('demo_002', 'SYSTEM_MAINTENANCE', 'IN_APP', 'IN_APP_PROVIDER', 'GROUP', 'ALL_EMPLOYEES', '{"groupCode":"ALL_EMPLOYEES","groupName":"全体员工"}', '{"startTime":"2024-01-15 02:00:00","duration":"2小时"}', '系统维护通知', '系统将于 2024-01-15 02:00:00 开始维护，预计持续 2小时，维护期间服务可能受到影响，敬请谅解。', 'SUCCESS', NOW(), NOW()),
 ('demo_003', 'ORDER_SHIPPED', 'IN_APP', 'IN_APP_PROVIDER', 'INDIVIDUAL', 'test002', '{"userId":"test002","userName":"测试用户2"}', '{"orderNo":"ORD20240115001","trackingNo":"SF1234567890","estimatedDays":"3"}', '您的订单已发货', '您的订单 ORD20240115001 已发货，快递单号：SF1234567890，预计 3 天内送达。', 'SUCCESS', NOW(), NOW());
 
 -- 插入示例站内信（对应上面的通知记录）
-INSERT INTO `user_in_app_messages` (`notification_id`, `user_id`, `subject`, `content`, `is_read`, `created_at`) VALUES
+INSERT INTO `user_in_app_message` (`notification_id`, `user_id`, `subject`, `content`, `is_read`, `created_at`) VALUES
 (1, 'test001', '欢迎加入我们！', '亲爱的 测试用户1，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。', 0, NOW()),
 (3, 'test002', '您的订单已发货', '您的订单 ORD20240115001 已发货，快递单号：SF1234567890，预计 3 天内送达。', 1, NOW());
 
 -- 为全体员工组的每个成员创建系统维护通知的站内信
-INSERT INTO `user_in_app_messages` (`notification_id`, `user_id`, `subject`, `content`, `is_read`, `created_at`)
+INSERT INTO `user_in_app_message` (`notification_id`, `user_id`, `subject`, `content`, `is_read`, `created_at`)
 SELECT 2, rgm.user_id, '系统维护通知', '系统将于 2024-01-15 02:00:00 开始维护，预计持续 2小时，维护期间服务可能受到影响，敬请谅解。', 0, NOW()
-FROM `recipient_group_members` rgm
+FROM `recipient_group_member` rgm
 WHERE rgm.group_code = 'ALL_EMPLOYEES' AND rgm.is_enabled = 1;
 
 -- =====================================================
@@ -249,12 +249,12 @@ CREATE INDEX `idx_group_members_enabled` ON `recipient_group_members` (`group_co
 -- =====================================================
 -- 设置自增起始值
 -- =====================================================
-ALTER TABLE `notification_channels` AUTO_INCREMENT = 10;
-ALTER TABLE `notification_templates` AUTO_INCREMENT = 100;
-ALTER TABLE `notifications` AUTO_INCREMENT = 1000;
-ALTER TABLE `user_in_app_messages` AUTO_INCREMENT = 1000;
-ALTER TABLE `recipient_groups` AUTO_INCREMENT = 100;
-ALTER TABLE `recipient_group_members` AUTO_INCREMENT = 1000;
+ALTER TABLE `notification_channel` AUTO_INCREMENT = 10;
+ALTER TABLE `notification_template` AUTO_INCREMENT = 100;
+ALTER TABLE `notification` AUTO_INCREMENT = 1000;
+ALTER TABLE `user_in_app_message` AUTO_INCREMENT = 1000;
+ALTER TABLE `recipient_group` AUTO_INCREMENT = 100;
+ALTER TABLE `recipient_group_member` AUTO_INCREMENT = 1000;
 
 -- 恢复外键检查
 SET FOREIGN_KEY_CHECKS = 1;
@@ -269,32 +269,32 @@ SELECT '数据库初始化完成！' AS status;
 SELECT
     '通知渠道' AS table_name,
     COUNT(*) AS record_count
-FROM notification_channels
+FROM notification_channel
 UNION ALL
 SELECT
     '通知模板' AS table_name,
     COUNT(*) AS record_count
-FROM notification_templates
+FROM notification_template
 UNION ALL
 SELECT
     '收件人组' AS table_name,
     COUNT(*) AS record_count
-FROM recipient_groups
+FROM recipient_group
 UNION ALL
 SELECT
     '组成员' AS table_name,
     COUNT(*) AS record_count
-FROM recipient_group_members
+FROM recipient_group_member
 UNION ALL
 SELECT
     '示例通知记录' AS table_name,
     COUNT(*) AS record_count
-FROM notifications
+FROM notification
 UNION ALL
 SELECT
     '示例站内信' AS table_name,
     COUNT(*) AS record_count
-FROM user_in_app_messages;
+FROM user_in_app_message;
 
 -- =====================================================
 -- 使用说明
@@ -303,12 +303,12 @@ FROM user_in_app_messages;
 数据库初始化完成！
 
 包含的数据：
-1. notification_channels: 4个通知渠道（站内信、短信、邮件、IM）
-2. notification_templates: 12个示例模板（覆盖各种业务场景）
-3. recipient_groups: 8个示例收件人组
-4. recipient_group_members: 15个示例组成员
-5. notifications: 3条示例通知记录
-6. user_in_app_messages: 示例站内信数据
+1. notification_channel: 4个通知渠道（站内信、短信、邮件、IM）
+2. notification_template: 12个示例模板（覆盖各种业务场景）
+3. recipient_group: 8个示例收件人组
+4. recipient_group_member: 15个示例组成员
+5. notification: 3条示例通知记录
+6. user_in_app_message: 示例站内信数据
 
 使用方法：
 1. 创建数据库：
@@ -320,7 +320,7 @@ FROM user_in_app_messages;
 3. 验证初始化结果：
    USE notification_service;
    SHOW TABLES;
-   SELECT COUNT(*) FROM notification_channels;
+   SELECT COUNT(*) FROM notification_channel;
 
 注意事项：
 - 示例数据仅用于测试和演示

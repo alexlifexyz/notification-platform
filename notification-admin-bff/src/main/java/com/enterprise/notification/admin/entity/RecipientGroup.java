@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("recipient_groups")
+@TableName("recipient_group")
 public class RecipientGroup {
 
     @TableId(value = "id", type = IdType.AUTO)
