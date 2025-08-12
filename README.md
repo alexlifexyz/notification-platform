@@ -5,19 +5,18 @@
 ## 🚀 快速开始
 
 ```bash
-# 1. 启动数据库
-cd database && docker-compose up -d
+# 1. 初始化数据库
+./scripts/database-manager.sh init
 
-# 2. 启动后端服务
-cd notification-service
-java -jar target/notification-service-1.0.0.jar
+# 2. 启动服务
+./scripts/deployment/start-services-for-swagger-test.sh
 
-# 3. 启动前端
-cd notification-frontend
-npm install && npm run dev
+# 3. 运行测试验证
+./scripts/run-tests.sh basic
 
 # 4. 访问系统
-http://localhost:3000
+# Swagger UI: http://localhost:8080/notification-service/swagger-ui.html
+# Admin API: http://localhost:8081/notification-admin/swagger-ui.html
 ```
 
 ## 📚 完整文档
@@ -31,8 +30,8 @@ http://localhost:3000
 - **[🔧 配置指南](docs/CONFIGURATION-GUIDE.md)** - 详细的配置说明
 
 ### 🔗 快速链接
-- [API文档](docs/03-api-reference.md) | [开发指南](docs/04-development-guide.md) | [部署指南](docs/05-deployment-guide.md)
-- [完整实现总结](docs/COMPLETE-IMPLEMENTATION-SUMMARY.md) | [真实实现总结](docs/REAL-IMPLEMENTATION-SUMMARY.md)
+- [API文档](docs/api/) | [开发指南](docs/development/) | [部署指南](docs/deployment/)
+- [完整实现总结](docs/COMPLETE-IMPLEMENTATION-SUMMARY.md)
 
 ## ✨ 核心特性
 
@@ -48,12 +47,18 @@ http://localhost:3000
 ```
 notification-platform/
 ├── docs/                    # 📚 所有文档
-├── database/               # 🗄️ 数据库脚本和Docker配置
+│   ├── api/                # 📋 API相关文档
+│   ├── development/        # 🛠️ 开发相关文档
+│   └── deployment/         # 🚀 部署相关文档
+├── scripts/                # 🔧 脚本工具
+│   ├── tests/             # 🧪 测试脚本
+│   ├── database/          # 🗄️ 数据库脚本
+│   └── deployment/        # 📦 部署脚本
 ├── notification-common/    # 📦 公共模块
 ├── notification-service/   # 🚀 后端服务
-├── notification-frontend/  # 🖥️ 前端应用
-├── notification-bff/      # 🔗 BFF层
-└── test-*.sh              # 🧪 测试脚本
+├── notification-client-sdk/ # 📱 客户端SDK
+├── notification-admin-bff/ # 🔗 管理后台BFF
+└── examples/              # 💡 使用示例
 ```
 
 ## 🎯 技术栈
