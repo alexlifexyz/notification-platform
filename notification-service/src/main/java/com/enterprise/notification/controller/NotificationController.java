@@ -1,5 +1,6 @@
 package com.enterprise.notification.controller;
 
+import com.enterprise.notification.common.dto.DirectSendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
 import com.enterprise.notification.service.NotificationService;
@@ -64,6 +65,44 @@ public class NotificationController {
             errorResponse.setErrorMessage("服务器内部错误: " + e.getMessage());
             errorResponse.setProcessedAt(java.time.LocalDateTime.now());
             
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
+    /**
+     * 直接发送通知（不使用模板）
+     *
+     * @param request 直接发送请求
+     * @return 发送响应
+     */
+    @Operation(summary = "直接发送通知", description = "不使用模板配置，直接发送指定内容的通知，支持个人通知和组通知")
+    @PostMapping("/send-direct")
+    public ResponseEntity<SendNotificationResponse> sendDirectNotification(
+            @Parameter(description = "直接发送通知请求") @Valid @RequestBody DirectSendNotificationRequest request) {
+
+        log.info("接收到直接发送通知请求: requestId={}, channelCodes={}, recipientType={}, recipientId={}",
+                request.getRequestId(),
+                request.getChannelCodes(),
+                request.getRecipient().getType(),
+                request.getRecipient().getId());
+
+        try {
+            SendNotificationResponse response = notificationService.sendDirectNotification(request);
+
+            log.info("直接发送通知请求处理完成: requestId={}, status={}",
+                    request.getRequestId(), response.getStatus());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("直接发送通知请求处理异常: requestId={}", request.getRequestId(), e);
+
+            SendNotificationResponse errorResponse = new SendNotificationResponse();
+            errorResponse.setRequestId(request.getRequestId());
+            errorResponse.setStatus("FAILED");
+            errorResponse.setErrorMessage("服务器内部错误: " + e.getMessage());
+            errorResponse.setProcessedAt(java.time.LocalDateTime.now());
+
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
