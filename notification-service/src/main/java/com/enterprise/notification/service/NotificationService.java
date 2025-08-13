@@ -2,6 +2,7 @@ package com.enterprise.notification.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.enterprise.notification.dispatcher.NotificationDispatcher;
+import com.enterprise.notification.async.AsyncTaskManager;
 import com.enterprise.notification.common.dto.DirectSendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
@@ -14,8 +15,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.CompletableFuture;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -56,6 +60,9 @@ public class NotificationService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AsyncTaskManager asyncTaskManager;
 
     /**
      * 发送通知
@@ -195,6 +202,72 @@ public class NotificationService {
         }
 
         return response;
+    }
+
+    /**
+     * 异步发送通知（模板方式）
+     *
+     * @param request 发送请求
+     * @return 异步任务Future
+     */
+    @Async("notificationAsyncExecutor")
+    public CompletableFuture<SendNotificationResponse> sendNotificationAsync(SendNotificationRequest request) {
+        log.info("开始异步发送通知: requestId={}, templateCode={}",
+                request.getRequestId(), request.getTemplateCode());
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                SendNotificationResponse response = sendNotification(request);
+                log.info("异步通知发送完成: requestId={}, status={}",
+                        request.getRequestId(), response.getStatus());
+                return response;
+            } catch (Exception e) {
+                log.error("异步通知发送异常: requestId={}", request.getRequestId(), e);
+
+                // 创建错误响应
+                SendNotificationResponse errorResponse = new SendNotificationResponse();
+                errorResponse.setRequestId(request.getRequestId());
+                errorResponse.setStatus("FAILED");
+                errorResponse.setErrorMessage("异步发送异常: " + e.getMessage());
+                errorResponse.setProcessedAt(LocalDateTime.now());
+                errorResponse.setResults(new ArrayList<>());
+
+                return errorResponse;
+            }
+        });
+    }
+
+    /**
+     * 异步发送通知（直接发送方式）
+     *
+     * @param request 直接发送请求
+     * @return 异步任务Future
+     */
+    @Async("notificationAsyncExecutor")
+    public CompletableFuture<SendNotificationResponse> sendDirectNotificationAsync(DirectSendNotificationRequest request) {
+        log.info("开始异步直接发送通知: requestId={}, channelCodes={}",
+                request.getRequestId(), request.getChannelCodes());
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                SendNotificationResponse response = sendDirectNotification(request);
+                log.info("异步直接发送完成: requestId={}, status={}",
+                        request.getRequestId(), response.getStatus());
+                return response;
+            } catch (Exception e) {
+                log.error("异步直接发送异常: requestId={}", request.getRequestId(), e);
+
+                // 创建错误响应
+                SendNotificationResponse errorResponse = new SendNotificationResponse();
+                errorResponse.setRequestId(request.getRequestId());
+                errorResponse.setStatus("FAILED");
+                errorResponse.setErrorMessage("异步发送异常: " + e.getMessage());
+                errorResponse.setProcessedAt(LocalDateTime.now());
+                errorResponse.setResults(new ArrayList<>());
+
+                return errorResponse;
+            }
+        });
     }
 
     /**

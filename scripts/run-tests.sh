@@ -49,6 +49,7 @@ show_help() {
     echo "  direct-send           直接发送API测试"
     echo "  multi-channel         多渠道发送测试"
     echo "  idempotency           幂等性测试"
+    echo "  async-send            异步发送功能测试"
     echo "  email                 邮件API测试"
     echo "  swagger               Swagger接口测试"
     echo "  startup               简单启动测试"
@@ -103,11 +104,12 @@ run_all_tests() {
     # 按顺序运行测试
     local test_order=(
         "simple-startup"
-        "swagger-endpoints" 
+        "swagger-endpoints"
         "email-api"
         "direct-send-api"
         "multi-channel-send"
         "multi-channel-idempotency"
+        "async-send"
         "all-notifications"
     )
     
