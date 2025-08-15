@@ -14,8 +14,10 @@ import com.enterprise.notification.admin.mapper.NotificationChannelMapper;
 import com.enterprise.notification.admin.mapper.NotificationMapper;
 import com.enterprise.notification.admin.mapper.NotificationTemplateMapper;
 import com.enterprise.notification.client.NotificationClient;
+import com.enterprise.notification.common.dto.BaseNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
+import com.enterprise.notification.enums.RecipientType;
 import com.enterprise.notification.enums.SendStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -129,21 +131,21 @@ public class NotificationAuditService {
                 Map<String, Object> recipientInfoMap = objectMapper.readValue(
                         notification.getRecipientInfo(), new TypeReference<Map<String, Object>>() {});
                 
-                SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-                recipient.setType(notification.getRecipientType().name().toLowerCase());
-                recipient.setId(notification.getRecipientId());
+                // 根据接收者类型设置请求
+                if (notification.getRecipientType() == RecipientType.GROUP) {
+                    // 组发送
+                    sendRequest.setGroupCode(notification.getRecipientId());
+                } else {
+                    // 个人发送 - 使用新的UserInfo结构
+                    BaseNotificationRequest.UserInfo user = new BaseNotificationRequest.UserInfo();
+                    user.setUserId(notification.getRecipientId());
+                    user.setUserName((String) recipientInfoMap.get("userName"));
+                    user.setPhone((String) recipientInfoMap.get("phone"));
+                    user.setEmail((String) recipientInfoMap.get("email"));
+                    user.setImAccount((String) recipientInfoMap.get("imAccount"));
 
-                // 如果是个人接收者，设置联系方式
-                if ("individual".equals(recipient.getType())) {
-                    SendNotificationRequest.ContactInfo contactInfo = new SendNotificationRequest.ContactInfo();
-                    contactInfo.setUserName((String) recipientInfoMap.get("userName"));
-                    contactInfo.setPhone((String) recipientInfoMap.get("phone"));
-                    contactInfo.setEmail((String) recipientInfoMap.get("email"));
-                    contactInfo.setImAccount((String) recipientInfoMap.get("imAccount"));
-                    recipient.setContactInfo(contactInfo);
+                    sendRequest.setUsers(Arrays.asList(user));
                 }
-
-                sendRequest.setRecipient(recipient);
             }
 
             // 解析模板参数

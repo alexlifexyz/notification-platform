@@ -1,10 +1,11 @@
 package com.enterprise.notification.common.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -14,13 +15,8 @@ import java.util.List;
  * @since 1.0.0
  */
 @Data
-public class DirectSendNotificationRequest {
-
-    /**
-     * 请求ID，用于幂等性控制
-     */
-    @NotBlank(message = "请求ID不能为空")
-    private String requestId;
+@EqualsAndHashCode(callSuper = true)
+public class DirectSendNotificationRequest extends BaseNotificationRequest {
 
     /**
      * 通知渠道代码列表：IN_APP, SMS, EMAIL, IM
@@ -40,58 +36,14 @@ public class DirectSendNotificationRequest {
     @NotBlank(message = "消息内容不能为空")
     private String content;
 
-    /**
-     * 接收者信息
-     */
-    @NotNull(message = "接收者信息不能为空")
-    private RecipientInfo recipient;
+
 
     /**
-     * 接收者信息
+     * 验证渠道和联系方式的匹配性
+     * 确保指定渠道的用户都有对应的联系方式
      */
-    @Data
-    public static class RecipientInfo {
-        /**
-         * 接收者类型：individual（个人）或 group（组）
-         */
-        @NotBlank(message = "接收者类型不能为空")
-        private String type;
-
-        /**
-         * 接收者ID（用户ID或组代码）
-         */
-        @NotBlank(message = "接收者ID不能为空")
-        private String id;
-
-        /**
-         * 个人接收者的联系方式（当type为individual时使用）
-         */
-        private ContactInfo contactInfo;
-    }
-
-    /**
-     * 联系方式信息
-     */
-    @Data
-    public static class ContactInfo {
-        /**
-         * 用户名称
-         */
-        private String userName;
-
-        /**
-         * 手机号
-         */
-        private String phone;
-
-        /**
-         * 邮箱
-         */
-        private String email;
-
-        /**
-         * IM账号
-         */
-        private String imAccount;
+    @AssertTrue(message = "用户联系方式与指定渠道不匹配")
+    public boolean isValidChannelContacts() {
+        return validateChannelContacts(channelCodes);
     }
 }

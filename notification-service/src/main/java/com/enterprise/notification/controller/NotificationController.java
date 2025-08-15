@@ -49,11 +49,11 @@ public class NotificationController {
     public ResponseEntity<SendNotificationResponse> sendNotification(
             @Parameter(description = "通知发送请求") @Valid @RequestBody SendNotificationRequest request) {
         
-        log.info("接收到通知发送请求: requestId={}, templateCode={}, recipientType={}, recipientId={}", 
-                request.getRequestId(), 
+        log.info("接收到通知发送请求: requestId={}, templateCode={}, isGroup={}, userCount={}",
+                request.getRequestId(),
                 request.getTemplateCode(),
-                request.getRecipient().getType(),
-                request.getRecipient().getId());
+                request.isGroupSend(),
+                request.getUserCount());
 
         try {
             SendNotificationResponse response = notificationService.sendNotification(request);
@@ -87,11 +87,11 @@ public class NotificationController {
     public ResponseEntity<SendNotificationResponse> sendDirectNotification(
             @Parameter(description = "直接发送通知请求") @Valid @RequestBody DirectSendNotificationRequest request) {
 
-        log.info("接收到直接发送通知请求: requestId={}, channelCodes={}, recipientType={}, recipientId={}",
+        log.info("接收到直接发送通知请求: requestId={}, channelCodes={}, isGroup={}, userCount={}",
                 request.getRequestId(),
                 request.getChannelCodes(),
-                request.getRecipient().getType(),
-                request.getRecipient().getId());
+                request.isGroupSend(),
+                request.getUserCount());
 
         try {
             SendNotificationResponse response = notificationService.sendDirectNotification(request);

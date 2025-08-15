@@ -3,6 +3,7 @@ package com.enterprise.notification.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.enterprise.notification.dispatcher.NotificationDispatcher;
 import com.enterprise.notification.async.AsyncTaskManager;
+import com.enterprise.notification.common.dto.BaseNotificationRequest;
 import com.enterprise.notification.common.dto.DirectSendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
@@ -72,8 +73,8 @@ public class NotificationService {
      */
     @Transactional
     public SendNotificationResponse sendNotification(SendNotificationRequest request) {
-        log.info("开始处理通知发送请求: requestId={}, templateCode={}", 
-                request.getRequestId(), request.getTemplateCode());
+        log.info("开始处理通知发送请求: requestId={}, templateCode={}, isGroup={}, userCount={}",
+                request.getRequestId(), request.getTemplateCode(), request.isGroupSend(), request.getUserCount());
 
         SendNotificationResponse response = new SendNotificationResponse();
         response.setRequestId(request.getRequestId());
@@ -95,30 +96,14 @@ public class NotificationService {
                 return response;
             }
 
-            // 3. 根据接收者类型处理
-            List<NotificationSender.RecipientInfo> recipients = resolveRecipients(request.getRecipient());
-            if (recipients.isEmpty()) {
-                response.setStatus("FAILED");
-                response.setErrorMessage("未找到有效的接收者");
-                return response;
+            // 3. 处理接收者
+            if (request.isGroupSend()) {
+                // 组发送
+                return handleGroupTemplateSend(request, template);
+            } else {
+                // 多用户发送
+                return handleMultiUserTemplateSend(request, template);
             }
-
-            // 4. 批量发送
-            boolean allSuccess = true;
-            for (NotificationSender.RecipientInfo recipient : recipients) {
-                SendNotificationResponse.SendResult result = sendToRecipient(
-                        request, template, recipient);
-                response.getResults().add(result);
-                
-                if (!"SUCCESS".equals(result.getStatus())) {
-                    allSuccess = false;
-                }
-            }
-
-            response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
-            
-            log.info("通知发送处理完成: requestId={}, status={}, resultCount={}", 
-                    request.getRequestId(), response.getStatus(), response.getResults().size());
 
         } catch (Exception e) {
             log.error("通知发送处理异常: requestId={}", request.getRequestId(), e);
@@ -137,8 +122,8 @@ public class NotificationService {
      */
     @Transactional
     public SendNotificationResponse sendDirectNotification(DirectSendNotificationRequest request) {
-        log.info("开始处理直接发送通知请求: requestId={}, channelCodes={}",
-                request.getRequestId(), request.getChannelCodes());
+        log.info("开始处理直接发送通知请求: requestId={}, channelCodes={}, isGroup={}, userCount={}",
+                request.getRequestId(), request.getChannelCodes(), request.isGroupSend(), request.getUserCount());
 
         SendNotificationResponse response = new SendNotificationResponse();
         response.setRequestId(request.getRequestId());
@@ -159,41 +144,16 @@ public class NotificationService {
                 return response;
             }
 
-            // 2. 根据接收者类型处理
-            List<NotificationSender.RecipientInfo> recipients = resolveRecipients(
-                    convertToSendRequestRecipient(request.getRecipient()));
-            if (recipients.isEmpty()) {
-                response.setStatus("FAILED");
-                response.setErrorMessage("未找到有效的接收者");
-                return response;
+            // 2. 处理接收者
+            if (request.isGroupSend()) {
+                // 组发送
+                return handleGroupDirectSend(request);
+            } else {
+                // 多用户发送
+                return handleMultiUserDirectSend(request);
             }
 
-            // 3. 多渠道批量发送（简化的幂等性检查）
-            boolean allSuccess = true;
-            for (String channelCode : request.getChannelCodes()) {
-                // 检查该渠道是否已处理过
-                if (isRequestChannelProcessed(request.getRequestId(), channelCode)) {
-                    log.info("渠道请求已处理，跳过: requestId={}, channelCode={}",
-                            request.getRequestId(), channelCode);
-                    continue; // 直接跳过，不返回历史结果
-                }
 
-                // 该渠道未处理过，执行发送
-                for (NotificationSender.RecipientInfo recipient : recipients) {
-                    SendNotificationResponse.SendResult result = sendDirectToRecipient(
-                            request, channelCode, recipient);
-                    response.getResults().add(result);
-
-                    if (!"SUCCESS".equals(result.getStatus())) {
-                        allSuccess = false;
-                    }
-                }
-            }
-
-            response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
-
-            log.info("直接发送通知处理完成: requestId={}, status={}, resultCount={}",
-                    request.getRequestId(), response.getStatus(), response.getResults().size());
 
         } catch (Exception e) {
             log.error("直接发送通知处理异常: requestId={}", request.getRequestId(), e);
@@ -271,6 +231,192 @@ public class NotificationService {
     }
 
     /**
+     * 处理组直接发送
+     */
+    private SendNotificationResponse handleGroupDirectSend(DirectSendNotificationRequest request) {
+        log.info("处理组直接发送: requestId={}, groupCode={}", request.getRequestId(), request.getGroupCode());
+
+        SendNotificationResponse response = new SendNotificationResponse();
+        response.setRequestId(request.getRequestId());
+        response.setProcessedAt(LocalDateTime.now());
+        response.setResults(new ArrayList<>());
+
+        try {
+            boolean allSuccess = true;
+
+            // 为每个渠道发送给组
+            for (String channelCode : request.getChannelCodes()) {
+                // 检查该渠道是否已处理过
+                if (isRequestChannelProcessed(request.getRequestId(), channelCode)) {
+                    log.info("渠道请求已处理，跳过: requestId={}, channelCode={}",
+                            request.getRequestId(), channelCode);
+                    continue;
+                }
+
+                // 创建组接收者信息
+                NotificationSender.RecipientInfo groupRecipient = new NotificationSender.RecipientInfo();
+                groupRecipient.setType("group");
+                groupRecipient.setId(request.getGroupCode());
+                groupRecipient.setUserName(request.getGroupCode());
+
+                // 发送到指定渠道
+                SendNotificationResponse.SendResult result = sendDirectToRecipient(
+                        request, channelCode, groupRecipient);
+                response.getResults().add(result);
+
+                if (!"SUCCESS".equals(result.getStatus())) {
+                    allSuccess = false;
+                }
+            }
+
+            response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
+            return response;
+
+        } catch (Exception e) {
+            log.error("组直接发送异常: requestId={}", request.getRequestId(), e);
+            response.setStatus("FAILED");
+            response.setErrorMessage("组发送异常: " + e.getMessage());
+            return response;
+        }
+    }
+
+    /**
+     * 处理多用户直接发送
+     */
+    private SendNotificationResponse handleMultiUserDirectSend(DirectSendNotificationRequest request) {
+        log.info("处理多用户直接发送: requestId={}, userCount={}", request.getRequestId(), request.getUserCount());
+
+        SendNotificationResponse response = new SendNotificationResponse();
+        response.setRequestId(request.getRequestId());
+        response.setProcessedAt(LocalDateTime.now());
+        response.setResults(new ArrayList<>());
+
+        try {
+            boolean allSuccess = true;
+
+            // 为每个用户的每个渠道发送
+            for (BaseNotificationRequest.UserInfo user : request.getUsers()) {
+                for (String channelCode : request.getChannelCodes()) {
+                    // 生成用户渠道级别的requestId
+                    String userChannelRequestId = String.format("%s_%s_%s",
+                            request.getRequestId(), user.getUserId(), channelCode);
+
+                    // 检查该用户渠道是否已处理过
+                    if (isRequestChannelProcessed(userChannelRequestId, channelCode)) {
+                        log.info("用户渠道请求已处理，跳过: requestId={}, userId={}, channelCode={}",
+                                request.getRequestId(), user.getUserId(), channelCode);
+                        continue;
+                    }
+
+                    // 创建个人接收者信息
+                    NotificationSender.RecipientInfo recipient = new NotificationSender.RecipientInfo();
+                    recipient.setType("individual");
+                    recipient.setId(user.getUserId());
+                    recipient.setUserName(user.getUserName());
+                    recipient.setEmail(user.getEmail());
+                    recipient.setPhone(user.getPhone());
+                    recipient.setImAccount(user.getImAccount());
+
+                    // 发送到指定渠道
+                    SendNotificationResponse.SendResult result = sendDirectToRecipient(
+                            request, channelCode, recipient);
+                    response.getResults().add(result);
+
+                    if (!"SUCCESS".equals(result.getStatus())) {
+                        allSuccess = false;
+                    }
+                }
+            }
+
+            response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
+            return response;
+
+        } catch (Exception e) {
+            log.error("多用户直接发送异常: requestId={}", request.getRequestId(), e);
+            response.setStatus("FAILED");
+            response.setErrorMessage("多用户发送异常: " + e.getMessage());
+            return response;
+        }
+    }
+
+    /**
+     * 处理组模板发送
+     */
+    private SendNotificationResponse handleGroupTemplateSend(SendNotificationRequest request, NotificationTemplate template) {
+        log.info("处理组模板发送: requestId={}, groupCode={}", request.getRequestId(), request.getGroupCode());
+
+        SendNotificationResponse response = new SendNotificationResponse();
+        response.setRequestId(request.getRequestId());
+        response.setProcessedAt(LocalDateTime.now());
+        response.setResults(new ArrayList<>());
+
+        try {
+            // 创建组接收者信息
+            NotificationSender.RecipientInfo groupRecipient = new NotificationSender.RecipientInfo();
+            groupRecipient.setType("group");
+            groupRecipient.setId(request.getGroupCode());
+            groupRecipient.setUserName(request.getGroupCode());
+
+            // 发送给组
+            SendNotificationResponse.SendResult result = sendToRecipient(request, template, groupRecipient);
+            response.getResults().add(result);
+            response.setStatus("SUCCESS".equals(result.getStatus()) ? "SUCCESS" : "FAILED");
+
+            return response;
+        } catch (Exception e) {
+            log.error("组模板发送异常: requestId={}", request.getRequestId(), e);
+            response.setStatus("FAILED");
+            response.setErrorMessage("组发送异常: " + e.getMessage());
+            return response;
+        }
+    }
+
+    /**
+     * 处理多用户模板发送
+     */
+    private SendNotificationResponse handleMultiUserTemplateSend(SendNotificationRequest request, NotificationTemplate template) {
+        log.info("处理多用户模板发送: requestId={}, userCount={}", request.getRequestId(), request.getUserCount());
+
+        SendNotificationResponse response = new SendNotificationResponse();
+        response.setRequestId(request.getRequestId());
+        response.setProcessedAt(LocalDateTime.now());
+        response.setResults(new ArrayList<>());
+
+        try {
+            boolean allSuccess = true;
+
+            // 为每个用户发送
+            for (BaseNotificationRequest.UserInfo user : request.getUsers()) {
+                // 创建个人接收者信息
+                NotificationSender.RecipientInfo recipient = new NotificationSender.RecipientInfo();
+                recipient.setType("individual");
+                recipient.setId(user.getUserId());
+                recipient.setUserName(user.getUserName());
+                recipient.setEmail(user.getEmail());
+                recipient.setPhone(user.getPhone());
+                recipient.setImAccount(user.getImAccount());
+
+                // 发送给个人
+                SendNotificationResponse.SendResult result = sendToRecipient(request, template, recipient);
+                response.getResults().add(result);
+
+                if (!"SUCCESS".equals(result.getStatus())) {
+                    allSuccess = false;
+                }
+            }
+
+            response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
+            return response;
+
+        } catch (Exception e) {
+            log.error("多用户模板发送异常: requestId={}", request.getRequestId(), e);
+            response.setStatus("FAILED");
+            response.setErrorMessage("多用户发送异常: " + e.getMessage());
+            return response;
+        }
+    }
+
+    /**
      * 检查请求是否已处理（幂等性）
      */
     private boolean isRequestProcessed(String requestId) {
@@ -333,35 +479,7 @@ public class NotificationService {
         return templateMapper.selectOne(wrapper);
     }
 
-    /**
-     * 解析接收者
-     */
-    private List<NotificationSender.RecipientInfo> resolveRecipients(
-            SendNotificationRequest.RecipientInfo recipientInfo) {
-        
-        List<NotificationSender.RecipientInfo> recipients = new ArrayList<>();
 
-        if ("individual".equalsIgnoreCase(recipientInfo.getType())) {
-            // 个人接收者
-            NotificationSender.RecipientInfo recipient = new NotificationSender.RecipientInfo();
-            recipient.setUserId(recipientInfo.getId());
-            
-            if (recipientInfo.getContactInfo() != null) {
-                recipient.setUserName(recipientInfo.getContactInfo().getUserName());
-                recipient.setPhone(recipientInfo.getContactInfo().getPhone());
-                recipient.setEmail(recipientInfo.getContactInfo().getEmail());
-                recipient.setImAccount(recipientInfo.getContactInfo().getImAccount());
-            }
-            
-            recipients.add(recipient);
-            
-        } else if ("group".equalsIgnoreCase(recipientInfo.getType())) {
-            // 组接收者
-            recipients = getGroupMembers(recipientInfo.getId());
-        }
-
-        return recipients;
-    }
 
     /**
      * 获取组成员
@@ -446,7 +564,7 @@ public class NotificationService {
         notification.setRequestId(request.getRequestId());
         notification.setTemplateCode(request.getTemplateCode());
         notification.setChannelCode(template.getChannelCode());
-        notification.setRecipientType("group".equalsIgnoreCase(request.getRecipient().getType()) ? 
+        notification.setRecipientType("group".equalsIgnoreCase(recipient.getType()) ?
                 RecipientType.GROUP : RecipientType.INDIVIDUAL);
         notification.setRecipientId(recipient.getUserId());
         
@@ -499,26 +617,7 @@ public class NotificationService {
         }
     }
 
-    /**
-     * 转换DirectSendNotificationRequest的RecipientInfo为SendNotificationRequest的RecipientInfo
-     */
-    private SendNotificationRequest.RecipientInfo convertToSendRequestRecipient(
-            DirectSendNotificationRequest.RecipientInfo directRecipient) {
-        SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-        recipient.setType(directRecipient.getType());
-        recipient.setId(directRecipient.getId());
 
-        if (directRecipient.getContactInfo() != null) {
-            SendNotificationRequest.ContactInfo contactInfo = new SendNotificationRequest.ContactInfo();
-            contactInfo.setUserName(directRecipient.getContactInfo().getUserName());
-            contactInfo.setPhone(directRecipient.getContactInfo().getPhone());
-            contactInfo.setEmail(directRecipient.getContactInfo().getEmail());
-            contactInfo.setImAccount(directRecipient.getContactInfo().getImAccount());
-            recipient.setContactInfo(contactInfo);
-        }
-
-        return recipient;
-    }
 
     /**
      * 直接发送给单个接收者的单个渠道
@@ -575,7 +674,7 @@ public class NotificationService {
         notification.setRequestId(request.getRequestId());
         notification.setTemplateCode("DIRECT_SEND"); // 标记为直接发送
         notification.setChannelCode(channelCode);
-        notification.setRecipientType("group".equalsIgnoreCase(request.getRecipient().getType()) ?
+        notification.setRecipientType("group".equalsIgnoreCase(recipient.getType()) ?
                 RecipientType.GROUP : RecipientType.INDIVIDUAL);
         notification.setRecipientId(recipient.getUserId());
 

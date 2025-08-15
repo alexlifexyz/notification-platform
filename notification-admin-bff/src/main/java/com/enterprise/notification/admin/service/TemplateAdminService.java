@@ -13,6 +13,7 @@ import com.enterprise.notification.admin.entity.NotificationTemplate;
 import com.enterprise.notification.admin.mapper.NotificationChannelMapper;
 import com.enterprise.notification.admin.mapper.NotificationTemplateMapper;
 import com.enterprise.notification.client.NotificationClient;
+import com.enterprise.notification.common.dto.BaseNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -182,19 +184,15 @@ public class TemplateAdminService {
             sendRequest.setTemplateCode(request.getTemplateCode());
             sendRequest.setTemplateParams(request.getTemplateParams());
 
-            // 设置接收者信息
-            SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-            recipient.setType("individual");
-            recipient.setId(request.getTestRecipient().getUserId());
+            // 设置接收者信息 - 使用新的UserInfo结构
+            BaseNotificationRequest.UserInfo user = new BaseNotificationRequest.UserInfo();
+            user.setUserId(request.getTestRecipient().getUserId());
+            user.setUserName(request.getTestRecipient().getUserName());
+            user.setPhone(request.getTestRecipient().getPhone());
+            user.setEmail(request.getTestRecipient().getEmail());
+            user.setImAccount(request.getTestRecipient().getImAccount());
 
-            SendNotificationRequest.ContactInfo contactInfo = new SendNotificationRequest.ContactInfo();
-            contactInfo.setUserName(request.getTestRecipient().getUserName());
-            contactInfo.setPhone(request.getTestRecipient().getPhone());
-            contactInfo.setEmail(request.getTestRecipient().getEmail());
-            contactInfo.setImAccount(request.getTestRecipient().getImAccount());
-            recipient.setContactInfo(contactInfo);
-
-            sendRequest.setRecipient(recipient);
+            sendRequest.setUsers(Arrays.asList(user));
 
             // 调用通知服务发送
             SendNotificationResponse response = notificationClient.sendNotification(sendRequest);

@@ -1,5 +1,6 @@
 package com.enterprise.notification.service;
 
+import com.enterprise.notification.common.dto.BaseNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
 import com.enterprise.notification.mapper.NotificationTemplateMapper;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,17 +40,14 @@ public class NotificationServiceTest {
         request.setRequestId("test_req_001");
         request.setTemplateCode("USER_REGISTER_WELCOME");
 
-        SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-        recipient.setType("individual");
-        recipient.setId("test_user_001");
+        // 使用新的UserInfo结构
+        BaseNotificationRequest.UserInfo user = new BaseNotificationRequest.UserInfo();
+        user.setUserId("test_user_001");
+        user.setUserName("测试用户");
+        user.setPhone("13800138000");
+        user.setEmail("test@example.com");
 
-        SendNotificationRequest.ContactInfo contactInfo = new SendNotificationRequest.ContactInfo();
-        contactInfo.setUserName("测试用户");
-        contactInfo.setPhone("13800138000");
-        contactInfo.setEmail("test@example.com");
-        recipient.setContactInfo(contactInfo);
-
-        request.setRecipient(recipient);
+        request.setUsers(Arrays.asList(user));
 
         Map<String, Object> params = new HashMap<>();
         params.put("userName", "测试用户");
@@ -71,15 +70,12 @@ public class NotificationServiceTest {
         request.setRequestId("test_req_002");
         request.setTemplateCode("USER_REGISTER_WELCOME");
 
-        SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-        recipient.setType("individual");
-        recipient.setId("test_user_002");
+        // 使用新的UserInfo结构
+        BaseNotificationRequest.UserInfo user = new BaseNotificationRequest.UserInfo();
+        user.setUserId("test_user_002");
+        user.setUserName("测试用户2");
 
-        SendNotificationRequest.ContactInfo contactInfo = new SendNotificationRequest.ContactInfo();
-        contactInfo.setUserName("测试用户2");
-        recipient.setContactInfo(contactInfo);
-
-        request.setRecipient(recipient);
+        request.setUsers(Arrays.asList(user));
 
         Map<String, Object> params = new HashMap<>();
         params.put("userName", "测试用户2");

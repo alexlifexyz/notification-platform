@@ -2,6 +2,7 @@ package com.enterprise.notification.client.impl;
 
 import com.enterprise.notification.client.NotificationClient;
 import com.enterprise.notification.client.config.NotificationClientProperties;
+import com.enterprise.notification.common.dto.BaseNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationRequest;
 import com.enterprise.notification.common.dto.SendNotificationResponse;
 import com.enterprise.notification.common.exception.NotificationClientException;
@@ -12,6 +13,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -33,9 +35,9 @@ public class NotificationClientImpl implements NotificationClient {
 
     @Override
     public SendNotificationResponse sendNotification(SendNotificationRequest request) {
-        log.info("发送通知请求: requestId={}, templateCode={}, recipientType={}, recipientId={}", 
-                request.getRequestId(), request.getTemplateCode(), 
-                request.getRecipient().getType(), request.getRecipient().getId());
+        log.info("发送通知请求: requestId={}, templateCode={}, isGroup={}, userCount={}",
+                request.getRequestId(), request.getTemplateCode(),
+                request.isGroupSend(), request.getUserCount());
 
         try {
             String url = buildUrl("/api/v1/notifications/send");
@@ -89,10 +91,9 @@ public class NotificationClientImpl implements NotificationClient {
         request.setTemplateCode(templateCode);
         request.setTemplateParams(templateParams);
 
-        SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-        recipient.setType("individual");
-        recipient.setId(userId);
-        request.setRecipient(recipient);
+        BaseNotificationRequest.UserInfo user = new BaseNotificationRequest.UserInfo();
+        user.setUserId(userId);
+        request.setUsers(Arrays.asList(user));
 
         return sendNotification(request);
     }
@@ -106,17 +107,12 @@ public class NotificationClientImpl implements NotificationClient {
         request.setTemplateCode(templateCode);
         request.setTemplateParams(templateParams);
 
-        SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-        recipient.setType("individual");
-        recipient.setId(userId);
-
-        SendNotificationRequest.ContactInfo contactInfo = new SendNotificationRequest.ContactInfo();
-        contactInfo.setUserName(userName);
-        contactInfo.setPhone(phone);
-        contactInfo.setEmail(email);
-        recipient.setContactInfo(contactInfo);
-
-        request.setRecipient(recipient);
+        BaseNotificationRequest.UserInfo user = new BaseNotificationRequest.UserInfo();
+        user.setUserId(userId);
+        user.setUserName(userName);
+        user.setPhone(phone);
+        user.setEmail(email);
+        request.setUsers(Arrays.asList(user));
 
         return sendNotification(request);
     }
@@ -129,10 +125,7 @@ public class NotificationClientImpl implements NotificationClient {
         request.setTemplateCode(templateCode);
         request.setTemplateParams(templateParams);
 
-        SendNotificationRequest.RecipientInfo recipient = new SendNotificationRequest.RecipientInfo();
-        recipient.setType("group");
-        recipient.setId(groupCode);
-        request.setRecipient(recipient);
+        request.setGroupCode(groupCode);
 
         return sendNotification(request);
     }

@@ -50,6 +50,7 @@ show_help() {
     echo "  multi-channel         多渠道发送测试"
     echo "  idempotency           幂等性测试"
     echo "  async-send            异步发送功能测试"
+    echo "  simplified-send       简化发送接口测试（多用户+扁平化）"
     echo "  email                 邮件API测试"
     echo "  swagger               Swagger接口测试"
     echo "  startup               简单启动测试"
@@ -110,6 +111,7 @@ run_all_tests() {
         "multi-channel-send"
         "multi-channel-idempotency"
         "async-send"
+        "simplified-send"
         "all-notifications"
     )
     
