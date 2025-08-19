@@ -55,6 +55,11 @@ public class Notification {
     private String recipientId;
 
     /**
+     * 具体用户ID（个人发送时等于recipient_id，组发送时为组内具体用户ID）
+     */
+    private String userId;
+
+    /**
      * 接收者详细信息（JSON格式）
      */
     private String recipientInfo;

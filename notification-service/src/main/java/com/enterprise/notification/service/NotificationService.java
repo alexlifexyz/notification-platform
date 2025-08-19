@@ -82,13 +82,7 @@ public class NotificationService {
         response.setResults(new ArrayList<>());
 
         try {
-            // 1. 幂等性检查
-            if (isRequestProcessed(request.getRequestId())) {
-                log.info("请求已处理，返回幂等结果: requestId={}", request.getRequestId());
-                return getExistingResponse(request.getRequestId());
-            }
-
-            // 2. 获取模板信息
+            // 1. 获取模板信息（幂等性检查在具体处理方法中进行）
             NotificationTemplate template = getTemplate(request.getTemplateCode());
             if (template == null) {
                 response.setStatus("FAILED");
@@ -244,28 +238,41 @@ public class NotificationService {
         try {
             boolean allSuccess = true;
 
-            // 为每个渠道发送给组
-            for (String channelCode : request.getChannelCodes()) {
-                // 检查该渠道是否已处理过
-                if (isRequestChannelProcessed(request.getRequestId(), channelCode)) {
-                    log.info("渠道请求已处理，跳过: requestId={}, channelCode={}",
-                            request.getRequestId(), channelCode);
-                    continue;
-                }
+            // 获取组成员
+            List<RecipientGroupMember> groupMembers = getGroupMembers(request.getGroupCode());
+            if (groupMembers.isEmpty()) {
+                response.setStatus("FAILED");
+                response.setErrorMessage("组成员为空: " + request.getGroupCode());
+                return response;
+            }
 
-                // 创建组接收者信息
-                NotificationSender.RecipientInfo groupRecipient = new NotificationSender.RecipientInfo();
-                groupRecipient.setType("group");
-                groupRecipient.setId(request.getGroupCode());
-                groupRecipient.setUserName(request.getGroupCode());
+            // 为每个组成员的每个渠道发送
+            for (RecipientGroupMember member : groupMembers) {
+                for (String channelCode : request.getChannelCodes()) {
+                    // 检查该用户渠道是否已处理过
+                    if (isRequestUserChannelProcessed(request.getRequestId(), member.getUserId(), channelCode)) {
+                        log.info("用户渠道请求已处理，跳过: requestId={}, userId={}, channelCode={}",
+                                request.getRequestId(), member.getUserId(), channelCode);
+                        continue;
+                    }
 
-                // 发送到指定渠道
-                SendNotificationResponse.SendResult result = sendDirectToRecipient(
-                        request, channelCode, groupRecipient);
-                response.getResults().add(result);
+                    // 创建组成员接收者信息
+                    NotificationSender.RecipientInfo memberRecipient = new NotificationSender.RecipientInfo();
+                    memberRecipient.setType("group");  // 直接设置为组类型
+                    memberRecipient.setUserId(member.getUserId());  // 语义明确的userId字段
+                    memberRecipient.setUserName(member.getUserName());
+                    memberRecipient.setEmail(member.getEmail());
+                    memberRecipient.setPhone(member.getPhone());
+                    memberRecipient.setImAccount(member.getImAccount());
 
-                if (!"SUCCESS".equals(result.getStatus())) {
-                    allSuccess = false;
+                    // 发送到指定渠道
+                    SendNotificationResponse.SendResult result = sendDirectToRecipient(
+                            request, channelCode, memberRecipient);
+                    response.getResults().add(result);
+
+                    if (!"SUCCESS".equals(result.getStatus())) {
+                        allSuccess = false;
+                    }
                 }
             }
 
@@ -297,12 +304,8 @@ public class NotificationService {
             // 为每个用户的每个渠道发送
             for (BaseNotificationRequest.UserInfo user : request.getUsers()) {
                 for (String channelCode : request.getChannelCodes()) {
-                    // 生成用户渠道级别的requestId
-                    String userChannelRequestId = String.format("%s_%s_%s",
-                            request.getRequestId(), user.getUserId(), channelCode);
-
                     // 检查该用户渠道是否已处理过
-                    if (isRequestChannelProcessed(userChannelRequestId, channelCode)) {
+                    if (isRequestUserChannelProcessed(request.getRequestId(), user.getUserId(), channelCode)) {
                         log.info("用户渠道请求已处理，跳过: requestId={}, userId={}, channelCode={}",
                                 request.getRequestId(), user.getUserId(), channelCode);
                         continue;
@@ -311,7 +314,7 @@ public class NotificationService {
                     // 创建个人接收者信息
                     NotificationSender.RecipientInfo recipient = new NotificationSender.RecipientInfo();
                     recipient.setType("individual");
-                    recipient.setId(user.getUserId());
+                    recipient.setUserId(user.getUserId());  // 语义明确的userId字段
                     recipient.setUserName(user.getUserName());
                     recipient.setEmail(user.getEmail());
                     recipient.setPhone(user.getPhone());
@@ -351,18 +354,46 @@ public class NotificationService {
         response.setResults(new ArrayList<>());
 
         try {
-            // 创建组接收者信息
-            NotificationSender.RecipientInfo groupRecipient = new NotificationSender.RecipientInfo();
-            groupRecipient.setType("group");
-            groupRecipient.setId(request.getGroupCode());
-            groupRecipient.setUserName(request.getGroupCode());
+            // 获取组成员
+            List<RecipientGroupMember> groupMembers = getGroupMembers(request.getGroupCode());
+            if (groupMembers.isEmpty()) {
+                response.setStatus("FAILED");
+                response.setErrorMessage("组成员为空: " + request.getGroupCode());
+                return response;
+            }
 
-            // 发送给组
-            SendNotificationResponse.SendResult result = sendToRecipient(request, template, groupRecipient);
-            response.getResults().add(result);
-            response.setStatus("SUCCESS".equals(result.getStatus()) ? "SUCCESS" : "FAILED");
+            boolean allSuccess = true;
 
+            // 为每个组成员发送
+            for (RecipientGroupMember member : groupMembers) {
+                // 检查该用户是否已处理过
+                if (isRequestUserChannelProcessed(request.getRequestId(), member.getUserId(), template.getChannelCode())) {
+                    log.info("用户模板请求已处理，跳过: requestId={}, userId={}, channelCode={}",
+                            request.getRequestId(), member.getUserId(), template.getChannelCode());
+                    continue;
+                }
+
+                // 创建组成员接收者信息
+                NotificationSender.RecipientInfo memberRecipient = new NotificationSender.RecipientInfo();
+                memberRecipient.setType("group");  // 直接设置为组类型
+                memberRecipient.setUserId(member.getUserId());  // 语义明确的userId字段
+                memberRecipient.setUserName(member.getUserName());
+                memberRecipient.setEmail(member.getEmail());
+                memberRecipient.setPhone(member.getPhone());
+                memberRecipient.setImAccount(member.getImAccount());
+
+                // 发送给组成员
+                SendNotificationResponse.SendResult result = sendToRecipient(request, template, memberRecipient);
+                response.getResults().add(result);
+
+                if (!"SUCCESS".equals(result.getStatus())) {
+                    allSuccess = false;
+                }
+            }
+
+            response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
             return response;
+
         } catch (Exception e) {
             log.error("组模板发送异常: requestId={}", request.getRequestId(), e);
             response.setStatus("FAILED");
@@ -387,10 +418,17 @@ public class NotificationService {
 
             // 为每个用户发送
             for (BaseNotificationRequest.UserInfo user : request.getUsers()) {
+                // 检查该用户是否已处理过
+                if (isRequestUserChannelProcessed(request.getRequestId(), user.getUserId(), template.getChannelCode())) {
+                    log.info("用户模板请求已处理，跳过: requestId={}, userId={}, channelCode={}",
+                            request.getRequestId(), user.getUserId(), template.getChannelCode());
+                    continue;
+                }
+
                 // 创建个人接收者信息
                 NotificationSender.RecipientInfo recipient = new NotificationSender.RecipientInfo();
                 recipient.setType("individual");
-                recipient.setId(user.getUserId());
+                recipient.setUserId(user.getUserId());  // 语义明确的userId字段
                 recipient.setUserName(user.getUserName());
                 recipient.setEmail(user.getEmail());
                 recipient.setPhone(user.getPhone());
@@ -416,58 +454,20 @@ public class NotificationService {
         }
     }
 
-    /**
-     * 检查请求是否已处理（幂等性）
-     */
-    private boolean isRequestProcessed(String requestId) {
-        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Notification::getRequestId, requestId);
-        return notificationMapper.selectCount(wrapper) > 0;
-    }
+
 
     /**
-     * 检查特定渠道的请求是否已处理（多渠道幂等性）
+     * 检查特定用户渠道的请求是否已处理（多用户多渠道幂等性）
      */
-    private boolean isRequestChannelProcessed(String requestId, String channelCode) {
+    private boolean isRequestUserChannelProcessed(String requestId, String userId, String channelCode) {
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Notification::getRequestId, requestId)
+               .eq(Notification::getUserId, userId)
                .eq(Notification::getChannelCode, channelCode);
         return notificationMapper.selectCount(wrapper) > 0;
     }
 
-    /**
-     * 获取已存在的响应（幂等性）
-     */
-    private SendNotificationResponse getExistingResponse(String requestId) {
-        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Notification::getRequestId, requestId);
-        List<Notification> notifications = notificationMapper.selectList(wrapper);
 
-        SendNotificationResponse response = new SendNotificationResponse();
-        response.setRequestId(requestId);
-        response.setProcessedAt(LocalDateTime.now());
-        response.setResults(new ArrayList<>());
-
-        boolean allSuccess = true;
-        for (Notification notification : notifications) {
-            SendNotificationResponse.SendResult result = new SendNotificationResponse.SendResult();
-            result.setNotificationId(notification.getId());
-            result.setChannelCode(notification.getChannelCode());
-            result.setRecipientId(notification.getRecipientId());
-            result.setStatus(notification.getSendStatus().name());
-            result.setErrorMessage(notification.getErrorMessage());
-            result.setSentAt(notification.getSentAt());
-            
-            response.getResults().add(result);
-            
-            if (notification.getSendStatus() != SendStatus.SUCCESS) {
-                allSuccess = false;
-            }
-        }
-
-        response.setStatus(allSuccess ? "SUCCESS" : "PARTIAL_SUCCESS");
-        return response;
-    }
 
     /**
      * 获取模板
@@ -482,19 +482,27 @@ public class NotificationService {
 
 
     /**
-     * 获取组成员
+     * 获取组成员实体列表
      */
-    private List<NotificationSender.RecipientInfo> getGroupMembers(String groupCode) {
+    private List<RecipientGroupMember> getGroupMembers(String groupCode) {
         LambdaQueryWrapper<RecipientGroupMember> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(RecipientGroupMember::getGroupCode, groupCode)
                .eq(RecipientGroupMember::getIsEnabled, true);
-        
-        List<RecipientGroupMember> members = groupMemberMapper.selectList(wrapper);
+
+        return groupMemberMapper.selectList(wrapper);
+    }
+
+    /**
+     * 获取组成员接收者信息列表（用于兼容旧代码）
+     */
+    private List<NotificationSender.RecipientInfo> getGroupMemberRecipients(String groupCode) {
+        List<RecipientGroupMember> members = getGroupMembers(groupCode);
         List<NotificationSender.RecipientInfo> recipients = new ArrayList<>();
 
         for (RecipientGroupMember member : members) {
             NotificationSender.RecipientInfo recipient = new NotificationSender.RecipientInfo();
-            recipient.setUserId(member.getUserId());
+            recipient.setType("individual");
+            recipient.setUserId(member.getUserId());  // 语义明确的userId字段
             recipient.setUserName(member.getUserName());
             recipient.setPhone(member.getPhone());
             recipient.setEmail(member.getEmail());
@@ -566,7 +574,15 @@ public class NotificationService {
         notification.setChannelCode(template.getChannelCode());
         notification.setRecipientType("group".equalsIgnoreCase(recipient.getType()) ?
                 RecipientType.GROUP : RecipientType.INDIVIDUAL);
-        notification.setRecipientId(recipient.getUserId());
+
+        // 设置接收者ID和用户ID
+        if ("group".equalsIgnoreCase(recipient.getType())) {
+            notification.setRecipientId(request.getGroupCode()); // 组发送时设置为组代码
+            notification.setUserId(recipient.getUserId()); // 具体用户ID
+        } else {
+            notification.setRecipientId(recipient.getUserId()); // 个人发送时两者相同
+            notification.setUserId(recipient.getUserId());
+        }
         
         try {
             notification.setRecipientInfo(objectMapper.writeValueAsString(recipient));
@@ -676,7 +692,15 @@ public class NotificationService {
         notification.setChannelCode(channelCode);
         notification.setRecipientType("group".equalsIgnoreCase(recipient.getType()) ?
                 RecipientType.GROUP : RecipientType.INDIVIDUAL);
-        notification.setRecipientId(recipient.getUserId());
+
+        // 设置接收者ID和用户ID
+        if ("group".equalsIgnoreCase(recipient.getType())) {
+            notification.setRecipientId(request.getGroupCode()); // 组发送时设置为组代码
+            notification.setUserId(recipient.getUserId()); // 具体用户ID
+        } else {
+            notification.setRecipientId(recipient.getUserId()); // 个人发送时两者相同
+            notification.setUserId(recipient.getUserId());
+        }
 
         try {
             notification.setRecipientInfo(objectMapper.writeValueAsString(recipient));

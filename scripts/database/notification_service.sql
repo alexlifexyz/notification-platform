@@ -58,6 +58,7 @@ CREATE TABLE `notification` (
   `provider_code` varchar(50) DEFAULT NULL COMMENT '具体服务商代码',
   `recipient_type` varchar(20) NOT NULL COMMENT '接收者类型：INDIVIDUAL, GROUP',
   `recipient_id` varchar(100) NOT NULL COMMENT '接收者ID（用户ID或组代码）',
+  `user_id` varchar(100) NOT NULL COMMENT '具体用户ID（个人发送时等于recipient_id，组发送时为组内具体用户ID）',
   `recipient_info` text COMMENT '接收者详细信息（JSON格式）',
   `template_params` text COMMENT '模板参数（JSON格式）',
   `rendered_subject` varchar(500) DEFAULT NULL COMMENT '渲染后的主题',
@@ -68,10 +69,12 @@ CREATE TABLE `notification` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_request_channel` (`request_id`, `channel_code`),
+  UNIQUE KEY `uk_request_user_channel` (`request_id`, `user_id`, `channel_code`),
   KEY `idx_template_code` (`template_code`),
   KEY `idx_channel_code` (`channel_code`),
   KEY `idx_recipient_id` (`recipient_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_request_user` (`request_id`, `user_id`),
   KEY `idx_send_status` (`send_status`),
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知记录表（发件箱/审计日志）';
@@ -213,10 +216,11 @@ INSERT INTO `recipient_group_member` (`group_code`, `user_id`, `user_name`, `pho
 ('TEST_GROUP', 'test002', '测试用户2', '13900139002', 'test2@test.com', 'test002', '["IN_APP","EMAIL"]', 1);
 
 -- 插入示例通知记录（用于演示和测试）
-INSERT INTO `notification` (`request_id`, `template_code`, `channel_code`, `provider_code`, `recipient_type`, `recipient_id`, `recipient_info`, `template_params`, `rendered_subject`, `rendered_content`, `send_status`, `sent_at`, `created_at`) VALUES
-('demo_001', 'USER_REGISTER_WELCOME', 'IN_APP', 'IN_APP_PROVIDER', 'INDIVIDUAL', 'test001', '{"userId":"test001","userName":"测试用户1"}', '{"userName":"测试用户1"}', '欢迎加入我们！', '亲爱的 测试用户1，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。', 'SUCCESS', NOW(), NOW()),
-('demo_002', 'SYSTEM_MAINTENANCE', 'IN_APP', 'IN_APP_PROVIDER', 'GROUP', 'ALL_EMPLOYEES', '{"groupCode":"ALL_EMPLOYEES","groupName":"全体员工"}', '{"startTime":"2024-01-15 02:00:00","duration":"2小时"}', '系统维护通知', '系统将于 2024-01-15 02:00:00 开始维护，预计持续 2小时，维护期间服务可能受到影响，敬请谅解。', 'SUCCESS', NOW(), NOW()),
-('demo_003', 'ORDER_SHIPPED', 'IN_APP', 'IN_APP_PROVIDER', 'INDIVIDUAL', 'test002', '{"userId":"test002","userName":"测试用户2"}', '{"orderNo":"ORD20240115001","trackingNo":"SF1234567890","estimatedDays":"3"}', '您的订单已发货', '您的订单 ORD20240115001 已发货，快递单号：SF1234567890，预计 3 天内送达。', 'SUCCESS', NOW(), NOW());
+INSERT INTO `notification` (`request_id`, `template_code`, `channel_code`, `provider_code`, `recipient_type`, `recipient_id`, `user_id`, `recipient_info`, `template_params`, `rendered_subject`, `rendered_content`, `send_status`, `sent_at`, `created_at`) VALUES
+('demo_001', 'USER_REGISTER_WELCOME', 'IN_APP', 'IN_APP_PROVIDER', 'INDIVIDUAL', 'test001', 'test001', '{"userId":"test001","userName":"测试用户1"}', '{"userName":"测试用户1"}', '欢迎加入我们！', '亲爱的 测试用户1，欢迎您注册成为我们的用户！您的账号已激活，可以开始使用我们的服务了。', 'SUCCESS', NOW(), NOW()),
+('demo_002', 'SYSTEM_MAINTENANCE', 'IN_APP', 'IN_APP_PROVIDER', 'GROUP', 'ALL_EMPLOYEES', 'admin001', '{"groupCode":"ALL_EMPLOYEES","groupName":"全体员工"}', '{"startTime":"2024-01-15 02:00:00","duration":"2小时"}', '系统维护通知', '系统将于 2024-01-15 02:00:00 开始维护，预计持续 2小时，维护期间服务可能受到影响，敬请谅解。', 'SUCCESS', NOW(), NOW()),
+('demo_002', 'SYSTEM_MAINTENANCE', 'IN_APP', 'IN_APP_PROVIDER', 'GROUP', 'ALL_EMPLOYEES', 'ops001', '{"groupCode":"ALL_EMPLOYEES","groupName":"全体员工"}', '{"startTime":"2024-01-15 02:00:00","duration":"2小时"}', '系统维护通知', '系统将于 2024-01-15 02:00:00 开始维护，预计持续 2小时，维护期间服务可能受到影响，敬请谅解。', 'SUCCESS', NOW(), NOW()),
+('demo_003', 'ORDER_SHIPPED', 'IN_APP', 'IN_APP_PROVIDER', 'INDIVIDUAL', 'test002', 'test002', '{"userId":"test002","userName":"测试用户2"}', '{"orderNo":"ORD20240115001","trackingNo":"SF1234567890","estimatedDays":"3"}', '您的订单已发货', '您的订单 ORD20240115001 已发货，快递单号：SF1234567890，预计 3 天内送达。', 'SUCCESS', NOW(), NOW());
 
 -- 插入示例站内信（对应上面的通知记录）
 INSERT INTO `user_in_app_message` (`notification_id`, `user_id`, `subject`, `content`, `is_read`, `created_at`) VALUES
@@ -233,18 +237,19 @@ WHERE rgm.group_code = 'ALL_EMPLOYEES' AND rgm.is_enabled = 1;
 -- 创建性能优化索引
 -- =====================================================
 
--- 为notifications表创建复合索引，优化查询性能
-CREATE INDEX `idx_notifications_status_time` ON `notifications` (`send_status`, `created_at`);
-CREATE INDEX `idx_notifications_template_time` ON `notifications` (`template_code`, `created_at`);
-CREATE INDEX `idx_notifications_channel_time` ON `notifications` (`channel_code`, `created_at`);
-CREATE INDEX `idx_notifications_recipient_type` ON `notifications` (`recipient_type`, `recipient_id`);
+-- 为notification表创建复合索引，优化查询性能
+CREATE INDEX `idx_notification_status_time` ON `notification` (`send_status`, `created_at`);
+CREATE INDEX `idx_notification_template_time` ON `notification` (`template_code`, `created_at`);
+CREATE INDEX `idx_notification_channel_time` ON `notification` (`channel_code`, `created_at`);
+CREATE INDEX `idx_notification_recipient_type` ON `notification` (`recipient_type`, `recipient_id`);
+CREATE INDEX `idx_notification_user_time` ON `notification` (`user_id`, `created_at`);
 
--- 为user_in_app_messages表创建复合索引
-CREATE INDEX `idx_user_messages_user_read` ON `user_in_app_messages` (`user_id`, `is_read`, `created_at`);
-CREATE INDEX `idx_user_messages_user_time` ON `user_in_app_messages` (`user_id`, `created_at` DESC);
+-- 为user_in_app_message表创建复合索引
+CREATE INDEX `idx_user_message_user_read` ON `user_in_app_message` (`user_id`, `is_read`, `created_at`);
+CREATE INDEX `idx_user_message_user_time` ON `user_in_app_message` (`user_id`, `created_at` DESC);
 
--- 为recipient_group_members表创建复合索引
-CREATE INDEX `idx_group_members_enabled` ON `recipient_group_members` (`group_code`, `is_enabled`);
+-- 为recipient_group_member表创建复合索引
+CREATE INDEX `idx_group_member_enabled` ON `recipient_group_member` (`group_code`, `is_enabled`);
 
 -- =====================================================
 -- 设置自增起始值

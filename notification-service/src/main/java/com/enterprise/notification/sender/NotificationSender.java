@@ -68,8 +68,7 @@ public interface NotificationSender {
     @Getter
     class RecipientInfo {
         private String type;        // 接收者类型：individual 或 group
-        private String userId;      // 用户ID（当type为individual时使用）
-        private String id;          // 通用ID（可以是userId或groupCode）
+        private String userId;      // 用户ID（统一字段）
         private String userName;
         private String phone;
         private String email;
@@ -79,8 +78,7 @@ public interface NotificationSender {
 
         public RecipientInfo(String userId, String userName, String phone, String email, String imAccount) {
             this.type = "individual";
-            this.userId = userId;
-            this.id = userId;
+            this.userId = userId;  // 直接使用userId字段
             this.userName = userName;
             this.phone = phone;
             this.email = email;
